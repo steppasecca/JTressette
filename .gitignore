@@ -12,6 +12,7 @@ build/
 .idea/          # For IntelliJ IDEA
 .vscode/        # For VS Code
 *.iml           # For IntelliJ IDEA module files
+app/.vim/coc-settings.json
 app/.vim/       # Your Vim specific files
 *.log
 *.swp           # Vim swap files
