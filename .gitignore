@@ -1,0 +1,22 @@
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
+# Compiled output and build directories
+app/bin/
+build/
+.gradle/
+
+# Local editor/IDE files
+.idea/          # For IntelliJ IDEA
+.vscode/        # For VS Code
+*.iml           # For IntelliJ IDEA module files
+app/.vim/       # Your Vim specific files
+*.log
+*.swp           # Vim swap files
+
+# Other common ignores for Java
+*.jar
+*.war
+*.class
