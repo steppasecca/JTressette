@@ -2,7 +2,6 @@ package org.model;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Collections;
 
 /**
  * classe che modella un insieme di carte 
@@ -37,16 +36,6 @@ public abstract class CardSet {
 	}
 
 	/**
-     * Rimuove e restituisce la carta in cima/fine dell'insieme (logica specifica da implementare nelle sottoclassi).
-     *
-     *
-     * @return La carta rimossa.
-     * @throws IllegalStateException se l'insieme è vuoto.
-     */
-
-	public abstract Card drawCard();
-	
-	/**
 	 * 
 	 * restituisce il numero di carte dell'insieme
 	 * @return int numero di carte
@@ -64,12 +53,6 @@ public abstract class CardSet {
         return this.cards.isEmpty();
     }
 
-	/**
-	 * 
-	 *
-	
-	 * @return description of return value
-	 */
 
 }
 

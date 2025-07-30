@@ -7,9 +7,6 @@ import java.util.Objects;
  */
 
 public class Card implements Comparable<Card>{
-	public enum Suit{
-		SPADE,BASTONI,COPPE,DENARI
-	}
 
 	private final Suit suit; //seme della carta
 	private final Rank rank; //tipo di carta
