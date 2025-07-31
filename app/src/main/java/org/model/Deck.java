@@ -46,7 +46,6 @@ public class Deck extends CardSet {
 		Collections.shuffle(this.cards);
 	}
 
-	@Override
 	public Card drawCard(){
 		if (isEmpty()){
 			throw new IllegalStateException("il mazzo è vuoto, impossibile pescare");

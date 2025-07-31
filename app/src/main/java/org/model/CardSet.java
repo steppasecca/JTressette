@@ -17,6 +17,17 @@ public abstract class CardSet {
 	}
 
 	/**
+	 * metodo che ritorna la lista delle carte
+	 *
+	 * @param  
+	
+	 * @return List<Card> cards
+	 */
+	public List<Card> getCards(){
+		return cards;
+	}
+
+	/**
 	 *aggiunge una carta all'insime di carte 
 	 *
 	 * @param card la carta da aggiungere.
