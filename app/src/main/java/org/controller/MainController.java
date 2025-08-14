@@ -1,7 +1,7 @@
 package org.controller;
 
 
-import org.model.UserProfile;
+import org.model.*;
 import org.view.*;
 
 import javax.swing.*;
@@ -53,21 +53,37 @@ public class MainController {
 			dialog.setVisible(true);
 			saveProfile();
 		});
-		
-		//schermata di gioca
-		GamePanel gamePanel = new GamePanel(profile);
-		navigator.addScreen(Navigator.Screen.GAME,gamePanel);
-
-		//listener per una nuova partita
+		menuPanel.getStartButton().addActionListener(e -> {
+			String mode = menuPanel.getSelectedMode();
+			startGame(mode);
+		});	
 		
 	}
 
 	
 
 	private void startGame(String mode){
-		System.out.println("avvio partita in modalità" + mode);
+		System.out.println("avvio partita in modalità " + mode);
+
+		GameModeStrategy strategy = mode.equals("2 Giocatori") ?
+			new TwoPlayerStrategy() : new FourPlayerStrategy();
+
+		TressetteGame game = new TressetteGame(strategy);
+		game.startGame(); // mescola e distribuisce
+
+		// trova il player umano (primo HumanPlayer in lista)
+		Player human = game.getPlayers().stream()
+			.filter(p -> p instanceof org.model.HumanPlayer)
+			.findFirst()
+			.orElse(game.getPlayers().get(0)); // fallback
+
+		GamePanel gamePanel = new GamePanel();
+		navigator.addScreen(Navigator.Screen.GAME, gamePanel);
+
+		// crea controller che collegherà modello e view
+		new GameController(game, gamePanel, navigator, human);
+
 		navigator.navigate(Navigator.Screen.GAME);
-		//istanziare qui TressetteGame
 	}
 	private UserProfile loadProfile(){
 		try {

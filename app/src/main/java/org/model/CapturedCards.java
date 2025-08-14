@@ -25,7 +25,11 @@ public class CapturedCards extends CardSet{
         return score;
     }
 
-	public void addTrick(Trick trick){
+	public void addTrickCards(Trick trick){
 		this.cards.addAll(trick.getCards());
+	}
+	
+	public void addAndClearTrick(Trick trick){
+		this.cards.addAll(trick.clearTrick());
 	}
 }

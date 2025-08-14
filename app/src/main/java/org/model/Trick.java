@@ -7,56 +7,62 @@ import java.util.ArrayList;
  * classe che rappresenta le carte sul tavolo durante una mano di gioco
  */
 
-public class Trick extends CardSet{
+public class Trick {
 
-	private Card firstCardPlayed;
+	private Play firstPlay = null;
+	private final List<Play> plays  = new ArrayList<>();
 
-	public Trick(){
-		super(new ArrayList<>());
-		this.firstCardPlayed = null;
+	public void addPlay(Player player ,Card card){
+		Play play = new Play(player,card);
+		plays.add(play);
+		if(plays.size() == 1) firstPlay = play;
 	}
-	/**
-	 * Aggiunge una carta al trick sul tavolo.
-	 *
-	 * @param card La carta da aggiungere.
-	 */
-	@Override
-	public void addCard(Card card) {
-		super.addCard(card);
-		if (this.cards.size() == 1) {
-			this.firstCardPlayed = card;
 
-		}
+	public List<Play> getPlays(){
+		//per quale ragione tornare un nuovo oggetto?
+		return new ArrayList<>(plays);
 	}
-	/**
-	 * Determina quale carta ha vinto la presa secondo le regole del Tressette.
-	 * da valutare penso sia opportuno ritorni il giocatore che ha preso piuttosto che la carta o se implementare questo come un meccanismo separato
-	 * @return La carta vincente del trick.
-	 */
+	
 	public Card getWinningCard() {
-		if (this.isEmpty()) {
-			return null;
-		}
-		Card winningCard = firstCardPlayed;
-		if (firstCardPlayed == null) return null; // O gestisci errore
+        if (plays.isEmpty()) return null;
+        Card winning = firstPlay.getCard();
+        for (Play p : plays) {
+            Card c = p.getCard();
+            if (c.getSuit() == firstPlay.getCard().getSuit()) {
+                if (c.getCaptureOrder() > winning.getCaptureOrder()) {
+                    winning = c;
+                }
+            }
+        }
+        return winning;
+    }
+    public Player getWinningPlayer() {
+        Card winningCard = getWinningCard();
+        if (winningCard == null) return null;
+        for (Play p : plays) {
+            if (p.getCard().equals(winningCard)) return p.getPlayer();
+        }
+        return null;
+    }
 
-		for (Card card : this.cards) {
-			if (card.getSuit() == firstCardPlayed.getSuit()) {
-				if (card.getCaptureOrder() > winningCard.getCaptureOrder()) {
-					winningCard = card;
-				}
-			}
-		}
-		return winningCard;
+    public List<Card> clearTrick() {
+        List<Card> cards = new ArrayList<>();
+        for (Play p : plays) cards.add(p.getCard());
+        plays.clear();
+        firstPlay = null;
+        return cards;
+    }
+
+	public List<Card> getCards(){
+		List<Card> cards = new ArrayList<>();
+        for (Play p : plays) cards.add(p.getCard());
+		return cards;
 	}
-	/**
-	 * Resetta il trick (svuota le carte sul tavolo).
-	 * @return Le carte che erano nel trick.
-	 */
-	public List<Card> clearTrick() {
-		List<Card> clearedCards = new ArrayList<>(this.cards);
-		this.cards.clear();
-		this.firstCardPlayed = null;
-		return clearedCards;
-	}
+
+
+	
+	
+    public boolean isEmpty() { return plays.isEmpty(); }
+    public int size() { return plays.size(); }
 }
+

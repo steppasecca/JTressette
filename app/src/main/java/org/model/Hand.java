@@ -32,9 +32,13 @@ public class Hand extends CardSet{
 	 *
 	 * @return void
 	 */
-	public void sort(){
-		Collections.sort(this.cards);
-	}
+public void sort() {
+    Collections.sort(this.cards, (c1, c2) -> {
+        int suitCmp = c1.getSuit().ordinal() - c2.getSuit().ordinal();
+        if (suitCmp != 0) return suitCmp;
+        return Integer.compare(c1.getCaptureOrder(), c2.getCaptureOrder());
+    });
+}
 
 
 

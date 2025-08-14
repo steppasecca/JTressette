@@ -55,7 +55,7 @@ public class TressetteGame extends AbstractGame{
     
     @Override
     public void nextTurn() {
-        if (currentTrick.getSizeOfCardSet() < players.size()) {
+        if (currentTrick.size() < players.size()) {
             Player currentPlayer = players.get(currentPlayerIndex);
             
             // Logica per far giocare una carta al giocatore corrente
@@ -82,27 +82,13 @@ public class TressetteGame extends AbstractGame{
      * Termina la presa, determina il vincitore e assegna le carte.
      */
     private void endTrick() {
-        Card winningCard = currentTrick.getWinningCard();
-        int winningPlayerIndex = -1;
 
-        // Trova il giocatore che ha giocato la carta vincente
-        for (int i = 0; i < players.size(); i++) {
-            if (currentTrick.getCards().get(i).equals(winningCard)) {
-                winningPlayerIndex = i;
-                break;
-            }
-        }
-        
-        if (winningPlayerIndex != -1) {
-            Player winningPlayer = players.get(winningPlayerIndex);
-            winningPlayer.getTeam().addTrick(currentTrick);
-            
-            // Imposta il vincitore della presa come primo giocatore per il prossimo turno
-            this.currentPlayerIndex = winningPlayerIndex;
-        }
-
-        currentTrick.clearTrick();
-        
+		Player winner = currentTrick.getWinningPlayer();
+		if(winner!=null){
+			winner.getTeam().addTrick(currentTrick);
+			this.currentPlayerIndex = players.indexOf(winner);
+		}
+		currentTrick.clearTrick();
         setChanged();
         notifyObservers("trickEnded");
     }

@@ -56,7 +56,7 @@ public class Team{
 	}
 
 	public void addTrick(Trick trick){
-		this.capturedCards.addTrick(trick);
+		this.capturedCards.addTrickCards(trick);
 	}
 
 	public void incrementGamesWon(){
