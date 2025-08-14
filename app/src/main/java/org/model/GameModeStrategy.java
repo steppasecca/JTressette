@@ -10,10 +10,6 @@ import java.util.List;
 
 public interface GameModeStrategy {
 
+	int getPlayersPerTeam();
 	
-	/**
-     * Configura i giocatori e le squadre per la partita.
-     * @return La lista delle squadre create.
-     */
-    List<Team> setupGame();
 }

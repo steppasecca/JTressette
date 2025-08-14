@@ -123,7 +123,7 @@ public class GameController implements Observer {
                 protected org.model.Card doInBackground() throws Exception {
                     // l'IA sceglie la carta (mettere sleep breve se vuoi simulare pensiero)
                     Thread.sleep(150); // piccola pausa per effetto UX
-                    return ((ArtificialPlayer) current).chooseCardToPlay();
+                    return ((ArtificialPlayer) current).chooseCardToPlay(game.getCurrentTrick());
                 }
 
                 protected void done() {

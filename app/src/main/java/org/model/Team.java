@@ -13,15 +13,13 @@ public class Team{
 	private String teamName;
 	private List<Player> players;
 	private CapturedCards capturedCards;
-	private int gamesWon;
-	private int gamesLost;
+	private int roundScore;
 
 	public Team(String teamName){
 		this.teamName = teamName;
 		this.capturedCards = new CapturedCards();
 		this.players = new ArrayList<>();
-		this.gamesWon = 0;
-		this.gamesLost = 0;
+		this.roundScore = 0;
 	}
 	/**
 	 * metodi getters
@@ -39,13 +37,10 @@ public class Team{
 		return capturedCards;
 	}
 
-	public int getGamesWon(){
-		return this.gamesWon;
+	public int getRoundScore(){
+		return this.roundScore;
 	}
 
-	public int getGamesLost(){
-		return this.gamesLost;
-	}
 
 
 	/**
@@ -59,12 +54,8 @@ public class Team{
 		this.capturedCards.addTrickCards(trick);
 	}
 
-	public void incrementGamesWon(){
-		gamesWon++;
-	}
-
-	public void incrementGamesLost(){
-		gamesLost++;
+	public void addRoundScore(int score){
+		this.roundScore+=score;
 	}
 
 	/**

@@ -1,33 +1,58 @@
 package org.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class TressetteGame extends AbstractGame{
 
 	private GameModeStrategy gameMode;
+	private final UserProfile userProfile;
+	private static final int DEFAULT_WINNING_SCORE = 21;
+	private final int teamsCount = 2;
 
 	/**
      * Costruttore che accetta una strategia per la modalità di gioco.
      * @param gameMode La strategia per la configurazione dei giocatori e delle squadre.
      */
-    public TressetteGame(GameModeStrategy gameMode) {
+    public TressetteGame(GameModeStrategy gameMode,UserProfile userProfile) {
         super();
         this.gameMode = gameMode;
-        setupGame();
+		this.userProfile = userProfile;
+        setupGame(userProfile);
     }
 	/**
      * Metodo di configurazione che utilizza la strategia per inizializzare giocatori e squadre.
      */
-    private void setupGame() {
-        this.teams = gameMode.setupGame();
-        
-        // Estrai tutti i giocatori dalle squadre in una singola lista
-        // per usarla nei metodi dell'AbstractGame come dealCards()
-        this.players.clear();
-        for (Team team : teams) {
-            this.players.addAll(team.getPlayers());
+    private void setupGame(UserProfile profile) {
+        this.teams = new ArrayList<>();
+		this.players.clear();
+
+		int playersPerTeam = gameMode.getPlayersPerTeam();
+		int aiCounter = 1;
+
+		for(int t = 0;t<teamsCount;t++){
+			Team team = new Team("Team " + (t+1));
+			
+			for(int p = 0;p<playersPerTeam;p++){
+				Player newPlayer;
+				// riserva il primo slot al giocatore umano (se presente)
+                boolean isHumanSlot = (t == 0 && p == 0) && profile != null;
+                if (isHumanSlot) {
+                    String nick = profile.getNickname() != null && !profile.getNickname().isBlank()
+                            ? profile.getNickname() : "Player";
+                    newPlayer = new HumanPlayer(nick);
+                } else {
+                    newPlayer = new ArtificialPlayer("AI " + (aiCounter++));
+                }
+                // imposta team usando setTeam per mantenere l'unica sorgente di verità
+                newPlayer.setTeam(team);
+                // aggiungi alla lista globale di giocatori
+                this.players.add(newPlayer);
+            }
+            this.teams.add(team);
         }
-    }
+
+	}
 
     /**
      * Avvia una nuova partita: mischia il mazzo e distribuisce le carte.

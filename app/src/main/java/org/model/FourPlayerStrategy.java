@@ -10,21 +10,6 @@ import java.util.List;
 public class FourPlayerStrategy implements GameModeStrategy {
 
 	@Override
-	public List<Team> setupGame(){
-		List<Team> teams = new ArrayList<>();
-
-		Team team1 = new Team("squadra1");
-		team1.addPlayer(new HumanPlayer("giocatore 1"));
-		team1.addPlayer(new ArtificialPlayer("giocatore 3"));	
-
-		Team team2 = new Team("squadra2");
-		team2.addPlayer(new ArtificialPlayer("giocatore 2"));
-		team2.addPlayer(new ArtificialPlayer("giocatore 4")); 
-
-		teams.add(team1);
-		teams.add(team2);
-
-		return teams;
-	}
+	public int getPlayersPerTeam(){return 2;}
 
 }

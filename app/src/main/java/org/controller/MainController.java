@@ -68,7 +68,7 @@ public class MainController {
 		GameModeStrategy strategy = mode.equals("2 Giocatori") ?
 			new TwoPlayerStrategy() : new FourPlayerStrategy();
 
-		TressetteGame game = new TressetteGame(strategy);
+		TressetteGame game = new TressetteGame(strategy,profile);
 		game.startGame(); // mescola e distribuisce
 
 		// trova il player umano (primo HumanPlayer in lista)
