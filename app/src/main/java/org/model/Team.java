@@ -16,10 +16,10 @@ public class Team{
 	private int gamesWon;
 	private int gamesLost;
 
-	public Team(List<Player> players, String teamName){
+	public Team(String teamName){
 		this.teamName = teamName;
 		this.capturedCards = new CapturedCards();
-		this.players = new ArrayList<>(players);
+		this.players = new ArrayList<>();
 		this.gamesWon = 0;
 		this.gamesLost = 0;
 	}

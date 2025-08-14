@@ -64,6 +64,8 @@ public abstract class CardSet {
         return this.cards.isEmpty();
     }
 
-
+	public boolean containsCard(Card card){
+		return cards.contains(card);
+	}
 }
 
