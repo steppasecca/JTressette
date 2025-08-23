@@ -1,4 +1,4 @@
-package org.model.events;
+package org.events;
 
 
 import org.model.Card;

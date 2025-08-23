@@ -45,7 +45,7 @@ public class Trick {
         return null;
     }
 
-    public List<Card> clearTrick() {
+    public List<Card> getAndClearTrick() {
         List<Card> cards = new ArrayList<>();
         for (Play p : plays) cards.add(p.getCard());
         plays.clear();

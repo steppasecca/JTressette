@@ -6,7 +6,7 @@ import java.util.Random;
 import java.util.Collections;
 
 /**
- * classe che modella il mazzo di carte
+ * classe che rappresenta il mazzo di carte
  */
 
 public class Deck extends CardSet {
@@ -25,12 +25,11 @@ public class Deck extends CardSet {
 
 	/**
 	 * metodo che inizializza il mazzo aggiungendo tutte le carte
-	 *
 	 * @return void
 	 */
 	private void initializeDeck(){
-		for(Suit suit : Suit.values()){
-			for(Rank rank : Rank.values()){
+		for(Card.Suit suit : Card.Suit.values()){
+			for(Card.Rank rank : Card.Rank.values()){
 				this.addCard(new Card(suit,rank));
 			}
 		}
@@ -38,7 +37,6 @@ public class Deck extends CardSet {
 
 	/**
 	 * metodo che mischia le carte
-	 *
 	 * @return void
 	 */
 	
@@ -46,6 +44,11 @@ public class Deck extends CardSet {
 		Collections.shuffle(this.cards);
 	}
 
+	/**
+	 * metodo che rappresenta il pescare una carta
+	 *
+	 * @return card Card la carta pescata
+	 */
 	public Card drawCard(){
 		if (isEmpty()){
 			throw new IllegalStateException("il mazzo è vuoto, impossibile pescare");

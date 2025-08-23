@@ -25,11 +25,13 @@ public class CapturedCards extends CardSet{
         return score;
     }
 
+	/**
+	 * aggiunge una giocata dal tavolo
+	 * @param Trick trick
+	 * @return void
+	 */
 	public void addTrickCards(Trick trick){
-		this.cards.addAll(trick.getCards());
+		this.cards.addAll(trick.getAndClearTrick());
 	}
 	
-	public void addAndClearTrick(Trick trick){
-		this.cards.addAll(trick.clearTrick());
-	}
 }
