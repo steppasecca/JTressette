@@ -1,4 +1,4 @@
-package org.events;
+package org.model.events;
 
 /**
  * tipi di evento emessi dal model

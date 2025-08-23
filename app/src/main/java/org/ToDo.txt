@@ -1,0 +1,4 @@
+-- implementare un meccanismo nel model che controlli che la carta si possa giocatore
+-- controllare la gestione dei punteggi
+-- aggiungere javadoc
+-- ontrollare la gestione di turni round e game

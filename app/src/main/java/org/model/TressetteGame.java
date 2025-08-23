@@ -76,6 +76,9 @@ public class TressetteGame extends AbstractGame{
         this.dealCards();
         this.currentTrick.clearTrick();
         this.currentPlayerIndex = 0;
+		for(Player player: players){
+			player.getHand().sort();
+		} //ordina le carte delle giocatrici
         
         // La View deve aggiornare lo stato di gioco dopo l'avvio della smazzata
         setChanged();
@@ -87,15 +90,6 @@ public class TressetteGame extends AbstractGame{
         if (currentTrick.size() < players.size()) {
             Player currentPlayer = players.get(currentPlayerIndex);
             
-            // Logica per far giocare una carta al giocatore corrente
-            // Questa parte sarà gestita dal Controller, che a sua volta interagirà
-            // con la View per i giocatori umani o con l'AI per i giocatori artificiali.
-            
-            // Esempio: supponiamo che una carta sia stata giocata
-            // Card cardToPlay = ...; 
-            // currentPlayer.playCard(cardToPlay);
-            // currentTrick.addCard(cardToPlay);
-
             // Sposta il turno al prossimo giocatore
             currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
 

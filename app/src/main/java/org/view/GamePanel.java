@@ -4,6 +4,7 @@ import org.model.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -69,17 +70,27 @@ public class GamePanel extends JPanel {
      * Aggiorna la visuale della mano umana.
      * Deve essere chiamato sull'EDT; il controller fa SwingUtilities.invokeLater se necessario.
      */
-    public void updateHand(List<Card> cards) {
-        handPanel.removeAll();
-        for (Card c : cards) {
-            JButton b = new JButton(cardToString(c));
-            b.setFocusPainted(false);
-            b.addActionListener(e -> cardClickListener.accept(c));
-            handPanel.add(b);
-        }
-        handPanel.revalidate();
-        handPanel.repaint();
-    }
+	public void updateHand(List<org.model.Card> cards) {
+		handPanel.removeAll();
+		final int thumbW = 80;
+		final int thumbH = 120;
+		for (org.model.Card c : cards) {
+			BufferedImage img = ImageCache.getImageForCard(c);
+			JButton b;
+			if (img != null) {
+				Image scaled = img.getScaledInstance(thumbW, thumbH, Image.SCALE_SMOOTH);
+				b = new JButton(new ImageIcon(scaled));
+			} else {
+				b = new JButton(cardToString(c));
+			}
+			b.setFocusPainted(false);
+			b.setBorder(BorderFactory.createEmptyBorder());
+			b.addActionListener(e -> cardClickListener.accept(c));
+			handPanel.add(b);
+		}
+		handPanel.revalidate();
+		handPanel.repaint();
+	}
 
 
     /**
@@ -98,11 +109,36 @@ public class GamePanel extends JPanel {
 	public void setTablePanel(TablePanel tp) {
 		if (tablePanelComponent != null) remove(tablePanelComponent);
 		tablePanelComponent = tp;
-		add(tablePanelComponent, BorderLayout.CENTER); // sostituisce il precedente panel central
+		add(tablePanelComponent, BorderLayout.CENTER); 
 		revalidate();
 		repaint();
 	}
+// nuovo metodo per aggiornare la tabella con le giocate attuali
+public void updateTable(List<Play> plays, List<Player> players) {
+    if (tablePanelComponent == null) return;
+    // pulisci slot ultima carta prima di ri-disegnare
+    // mostra ogni play: trovi l'indice del player nella lista 'players'
+    for (Play p : plays) {
+        Player pl = p.getPlayer();
+        int idx = players.indexOf(pl);
+        if (idx >= 0) {
+            tablePanelComponent.showPlayedCard(idx, p.getCard());
+        }
+    }
+    // se la presa è vuota, potresti voler pulire le ultime carte:
+    if (plays.isEmpty()) {
+        // facoltativo: pulire last played per tutti (non implementato)
+    }
+}
 
+// delega per mostrare la carta vincente (usato da GameController)
+public void showPlayedCard(int playerIndex, org.model.Card card) {
+    if (tablePanelComponent != null) {
+        tablePanelComponent.showPlayedCard(playerIndex, card);
+    } else {
+        appendLog("tablePanel non inizializzato");
+    }
+}
 	// aggiornamento del giocatore corrente chiamato dal controller osservatore:
 	public void setCurrentPlayer(int playerIndex) {
 		if (tablePanelComponent != null) {

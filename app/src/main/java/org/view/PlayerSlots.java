@@ -24,7 +24,8 @@ class PlayerSlot extends JPanel {
     private void init() {
         setLayout(new BorderLayout(4,4));
         nameLabel = new JLabel(player.getNome(), SwingConstants.CENTER);
-        cardCountLabel = new JLabel("♠ " + (player.getHand() != null ? player.getHand().size() : 0), SwingConstants.CENTER);
+		int count = (player.getHand() != null) ? player.getHand().getSizeOfCardSet() : 0;
+		cardCountLabel = new JLabel("♠ " + count, SwingConstants.CENTER);
         lastCardView = new CardView(null);
 
         add(nameLabel, BorderLayout.NORTH);

@@ -1,17 +1,18 @@
 package org.controller;
 
-import org.model.events.*;
 import org.model.*;
+import org.model.events.*;
 import org.view.GamePanel;
+import org.view.TablePanel;
 
 import javax.swing.*;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Collections;
 
 /**
  * GameController: connette il TressetteGame (model) con la GamePanel (view).
- * Rispetta MVC: la view notifica l'input utente, il controller occupa la logica di interazione.
  */
 public class GameController implements Observer {
 
@@ -19,23 +20,26 @@ public class GameController implements Observer {
     private final GamePanel view;
     private final Navigator navigator;
     private final Player humanPlayer; // il player controllato dall'utente (assunto uno solo)
-    
+
     public GameController(TressetteGame game, GamePanel view, Navigator navigator, Player humanPlayer) {
         this.game = game;
         this.view = view;
         this.navigator = navigator;
         this.humanPlayer = humanPlayer;
 
-        // Register as observer (usando Observable/Observer come richiesto dalla specifica)
+        // crea e imposta il TablePanel nella view (tavolo parametrico 2/4)
+        TablePanel tp = new TablePanel(game.getPlayers());
+        this.view.setTablePanel(tp);
+
+        // Register as observer 
         this.game.addObserver(this);
 
         // Set view callback
-        this.view.setCardClickListener(card -> {
-            handleHumanPlay(card);
-        });
+        this.view.setCardClickListener(card -> handleHumanPlay(card));
 
         // inizializza view con stato corrente
         refreshView();
+
         // se l'IA inizia per prima, attivala
         triggerNextAiIfNeeded();
     }
@@ -43,80 +47,69 @@ public class GameController implements Observer {
     // Observer callback dal modello
     @Override
     public void update(Observable o, Object arg) {
-        // arg è la stringa di notifica che tu invii dal modello (es: "turnEnded")
         SwingUtilities.invokeLater(() -> {
-            // aggiorna la view dallo stato corrente del modello
-            refreshView();
+            // se riceviamo ModelEventMessage, gestiscilo; altrimenti refresh generale
+            if (arg instanceof ModelEventMessage) {
+                ModelEventMessage msg = (ModelEventMessage) arg;
+                switch (msg.getEvent()) {
+                    case CARDS_DEALT:
+                        // nuove mani: rinfresca completamente
+                        refreshView();
+                        break;
+                    case TURN_STARTED:
+                        Integer idx = (Integer) msg.getPayload();
+                        if (idx != null) view.setCurrentPlayer(idx);
+                        break;
+                    case TRICK_ENDED:
+                        TrickResult tr = (TrickResult) msg.getPayload();
+                        if (tr != null) {
+                            // mostra la carta vincente e rinfresca (punteggi, mani ecc.)
+                            view.showPlayedCard(tr.getWinnerIndex(), tr.getWinningCard());
+                        }
+                        refreshView();
+                        break;
+                    case PROFILE_CHANGED:
+                        // payload è UserProfile; se vuoi aggiornare header/menu gestiscilo qui
+                        break;
+                    case GAME_OVER:
+                        handleGameOver();
+                        break;
+                    default:
+                        // altri eventi: refresh per sicurezza
+                        refreshView();
+                        break;
+                }
+            } else {
+                // backward compatibility (non dovresti arrivare qui dopo il refactor)
+                refreshView();
+            }
 
-			if (!(arg instanceof org.model.events.ModelEventMessage)) return;
-			ModelEventMessage msg = (ModelEventMessage) arg;
-			switch (msg.getEvent()) {
-				case CARDS_DEALT:
-					// aggiorna mano/GUI partendo da game.getPlayers()
-					refreshViewFromModel();
-					break;
-				case TURN_STARTED:
-					Integer idx = (Integer) msg.getPayload();
-					view.setCurrentPlayer(idx);
-					break;
-				case TRICK_ENDED:
-					org.model.events.TrickResult tr = (org.model.events.TrickResult) msg.getPayload();
-					// animazioni, aggiornamento punteggi
-					refreshViewFromModel();
-					break;
-				case PROFILE_CHANGED:
-					UserProfile p = (UserProfile) msg.getPayload();
-					// aggiorna header/profile view
-					break;
-					// ...
-				default:
-					break;
-				}
             // dopo ogni aggiornamento prova ad avviare IA se serve
             triggerNextAiIfNeeded();
         });
     }
-    private  void setTablePanel(TablePanel tp) {
-    if (tablePanelComponent != null) remove(tablePanelComponent);
-    tablePanelComponent = tp;
-    add(tablePanelComponent, BorderLayout.CENTER); // sostituisce il precedente panel central
-    revalidate();
-    repaint();
-}
 
-// aggiornamento del giocatore corrente chiamato dal controller osservatore:
-public void setCurrentPlayer(int playerIndex) {
-    if (tablePanelComponent != null) {
-        tablePanelComponent.setCurrentPlayer(playerIndex);
-    } else {
-        appendLog("tablePanel non inizializzato");
-    }
-}oid refreshView() {
+    /** 
+	 * Aggiorna la view leggendo lo stato dal model 
+	 */
+    private void refreshView() {
         // aggiorna mano umana
         if (humanPlayer.getHand() != null) {
             view.updateHand(humanPlayer.getHand().getCards());
         } else {
-            view.updateHand(java.util.Collections.emptyList());
+            view.updateHand(Collections.emptyList());
         }
 
-        // aggiorna tavolo
+        // aggiorna tavolo: passa le giocate correnti e la lista di giocatori (per mappare player->indice)
         Trick trick = game.getCurrentTrick();
-        // suppongo che Trick esponga List<Play> getPlays() nella versione fixata
-        List<Play> plays = null;
-        try {
-            plays = (List<Play>) (Object) trick.getPlays(); // cast sicuro se Trick ha getPlays()
-        } catch (Exception e) {
-            // in caso la tua implementazione abbia un nome diverso, prova a prendere le carte come fallback
-            plays = java.util.Collections.emptyList();
-        }
-        view.updateTable(plays);
+        List<Play> plays = trick.getPlays();
+        view.updateTable(plays, game.getPlayers());
 
         // aggiorna punteggi
         view.updateScores(game.getTeams());
 
-        // indica il giocatore corrente
-        Player current = game.getPlayers().get(game.getCurrentPlayerIndex());
-        view.setCurrentPlayer(current.getNome());
+        // indica il giocatore corrente tramite indice
+        view.setCurrentPlayer(game.getCurrentPlayerIndex());
     }
 
     private synchronized void handleHumanPlay(org.model.Card card) {
@@ -137,28 +130,26 @@ public void setCurrentPlayer(int playerIndex) {
         humanPlayer.playCard(card);
         game.getCurrentTrick().addPlay(humanPlayer, card);
 
-        // notifica modello (se necessario) e procedi con nextTurn
+        // prosegui con il turno successivo (model si occuperà di notificare)
         game.nextTurn();
     }
 
-   /**
+    /**
      * Se il giocatore corrente è un'IA, avvia la loro mossa in background.
-     * Usa SwingWorker per non bloccare l'EDT. Dopo la mossa chiama game.nextTurn() dalla done().
      */
     private void triggerNextAiIfNeeded() {
         if (game.isRoundOver() || game.isGameOver()) return;
 
         Player current = game.getPlayers().get(game.getCurrentPlayerIndex());
         if (current instanceof ArtificialPlayer) {
-            // Esegue una sola mossa IA per volta
             new SwingWorker<org.model.Card, Void>() {
                 @Override
                 protected org.model.Card doInBackground() throws Exception {
-                    // l'IA sceglie la carta (mettere sleep breve se vuoi simulare pensiero)
-                    Thread.sleep(150); // piccola pausa per effetto UX
+                    Thread.sleep(150); // breve pausa per UX
                     return ((ArtificialPlayer) current).chooseCardToPlay(game.getCurrentTrick());
                 }
 
+                @Override
                 protected void done() {
                     try {
                         org.model.Card card = get();
@@ -166,12 +157,9 @@ public void setCurrentPlayer(int playerIndex) {
                             current.playCard(card);
                             game.getCurrentTrick().addPlay(current, card);
                         } else {
-                            // fallback: se IA non ha carta valida, log
                             view.appendLog("IA non ha giocato (carta nulla o non trovata).");
                         }
-                        // Muovi il turno avanti (model decide se fine presa ecc.)
                         game.nextTurn();
-                        // il modello notificherà gli observer e triggerNextAiIfNeeded verrà richiamato di nuovo
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -179,8 +167,8 @@ public void setCurrentPlayer(int playerIndex) {
             }.execute();
         }
     }
+
     private void handleGameOver() {
-        // mostra semplice dialog e torna al menu
         SwingUtilities.invokeLater(() -> {
             JOptionPane.showMessageDialog(null, "Partita terminata!");
             navigator.navigate(Navigator.Screen.MENU);
