@@ -1,5 +1,6 @@
 package org.controller;
 
+import org.model.events.*;
 import org.model.*;
 import org.view.GamePanel;
 
@@ -47,18 +48,50 @@ public class GameController implements Observer {
             // aggiorna la view dallo stato corrente del modello
             refreshView();
 
-            if (arg instanceof String) {
-                String msg = (String) arg;
-                view.appendLog("MODEL: " + msg);
-                if ("gameOver".equals(msg)) {
-                    handleGameOver();
-                }
-            }
+			if (!(arg instanceof org.model.events.ModelEventMessage)) return;
+			ModelEventMessage msg = (ModelEventMessage) arg;
+			switch (msg.getEvent()) {
+				case CARDS_DEALT:
+					// aggiorna mano/GUI partendo da game.getPlayers()
+					refreshViewFromModel();
+					break;
+				case TURN_STARTED:
+					Integer idx = (Integer) msg.getPayload();
+					view.setCurrentPlayer(idx);
+					break;
+				case TRICK_ENDED:
+					org.model.events.TrickResult tr = (org.model.events.TrickResult) msg.getPayload();
+					// animazioni, aggiornamento punteggi
+					refreshViewFromModel();
+					break;
+				case PROFILE_CHANGED:
+					UserProfile p = (UserProfile) msg.getPayload();
+					// aggiorna header/profile view
+					break;
+					// ...
+				default:
+					break;
+				}
             // dopo ogni aggiornamento prova ad avviare IA se serve
             triggerNextAiIfNeeded();
         });
     }
-    private void refreshView() {
+    private  void setTablePanel(TablePanel tp) {
+    if (tablePanelComponent != null) remove(tablePanelComponent);
+    tablePanelComponent = tp;
+    add(tablePanelComponent, BorderLayout.CENTER); // sostituisce il precedente panel central
+    revalidate();
+    repaint();
+}
+
+// aggiornamento del giocatore corrente chiamato dal controller osservatore:
+public void setCurrentPlayer(int playerIndex) {
+    if (tablePanelComponent != null) {
+        tablePanelComponent.setCurrentPlayer(playerIndex);
+    } else {
+        appendLog("tablePanel non inizializzato");
+    }
+}oid refreshView() {
         // aggiorna mano umana
         if (humanPlayer.getHand() != null) {
             view.updateHand(humanPlayer.getHand().getCards());

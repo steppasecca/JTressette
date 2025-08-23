@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 
+import org.model.events.*;
+
+
 public abstract class AbstractGame extends Observable{
 
     protected Deck deck;
@@ -31,7 +34,6 @@ public abstract class AbstractGame extends Observable{
 		for(int i = 0;i<cardsPerPlayer;i++){
 			for(Player player : players){
 				if(deck.isEmpty()){
-					//qui bisogna ritornare un errore
 					throw new IllegalStateException("errore ho cercato di distribuire carte da un mazzo vuoto");
 				}
 				else{
@@ -43,7 +45,7 @@ public abstract class AbstractGame extends Observable{
 			}
 		}
 		setChanged();
-		notifyObservers("carte distribuite");
+		notifyObservers(new ModelEventMessage(ModelEvent.CARDS_DEALT,null));
 	}
 	
     /**

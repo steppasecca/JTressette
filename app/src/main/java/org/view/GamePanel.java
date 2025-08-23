@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 public class GamePanel extends JPanel {
 
 	private final JPanel scorePanel = new JPanel(new GridLayout(0,1));
-	private final JPanel tablePanel = new JPanel(new GridLayout(1,4,10,10));
+	private TablePanel tablePanelComponent;
 	private final JPanel handPanel = new JPanel(new FlowLayout(FlowLayout.CENTER,5,5));
 	private final JTextArea logArea = new JTextArea(8,20);
 	private final JButton passButton = new JButton("passa il turno (debug)");
@@ -34,11 +34,6 @@ public class GamePanel extends JPanel {
 		top.add(new JLabel("punteggi: "),BorderLayout.NORTH);
 		top.add(scorePanel,BorderLayout.CENTER);
 
-		//al centro il "tavolo" da gioco
-		JPanel center = new JPanel(new BorderLayout());
-		center.add(new JLabel("tavolo (trick corrente)"),BorderLayout.NORTH);
-		tablePanel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
-		center.add(tablePanel, BorderLayout.CENTER);
 
 		//in basso la mano e i pulsanti
 		JPanel bottom = new JPanel(new BorderLayout());
@@ -59,7 +54,6 @@ public class GamePanel extends JPanel {
         east.add(new JScrollPane(logArea), BorderLayout.CENTER);
 
         add(top, BorderLayout.NORTH);
-        add(center, BorderLayout.CENTER);
         add(bottom, BorderLayout.SOUTH);
         add(east, BorderLayout.EAST);
 
@@ -87,30 +81,6 @@ public class GamePanel extends JPanel {
         handPanel.repaint();
     }
 
-    /**
-     * Aggiorna l'area tavolo con la lista di plays (ordine di gioco).
-     */
-    public void updateTable(List<Play> plays) {
-        tablePanel.removeAll();
-        // Mostra fino a 4 slot (vuoti se meno)
-        int slots = 4;
-        for (int i = 0; i < slots; i++) {
-            JPanel slot = new JPanel(new BorderLayout());
-            slot.setBorder(BorderFactory.createEtchedBorder());
-            if (i < plays.size()) {
-                Play p = plays.get(i);
-                JLabel who = new JLabel(p.getPlayer().getNome(), SwingConstants.CENTER);
-                JLabel card = new JLabel(cardToString(p.getCard()), SwingConstants.CENTER);
-                slot.add(who, BorderLayout.NORTH);
-                slot.add(card, BorderLayout.CENTER);
-            } else {
-                slot.add(new JLabel("(vuoto)", SwingConstants.CENTER), BorderLayout.CENTER);
-            }
-            tablePanel.add(slot);
-        }
-        tablePanel.revalidate();
-        tablePanel.repaint();
-    }
 
     /**
      * Aggiorna la sezione punteggi usando teams (nome e punteggio).
@@ -124,6 +94,23 @@ public class GamePanel extends JPanel {
         scorePanel.revalidate();
         scorePanel.repaint();
     }
+
+	public void setTablePanel(TablePanel tp) {
+		if (tablePanelComponent != null) remove(tablePanelComponent);
+		tablePanelComponent = tp;
+		add(tablePanelComponent, BorderLayout.CENTER); // sostituisce il precedente panel central
+		revalidate();
+		repaint();
+	}
+
+	// aggiornamento del giocatore corrente chiamato dal controller osservatore:
+	public void setCurrentPlayer(int playerIndex) {
+		if (tablePanelComponent != null) {
+			tablePanelComponent.setCurrentPlayer(playerIndex);
+		} else {
+			appendLog("tablePanel non inizializzato");
+		}
+	}
 
     public void setCurrentPlayer(String playerName) {
         appendLog("Turno corrente: " + playerName);

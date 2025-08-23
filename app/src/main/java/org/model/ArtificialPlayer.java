@@ -26,7 +26,7 @@ public class ArtificialPlayer extends Player {
 
         if (currentTrick.isEmpty()) {
 			return cardsInHand.stream()
-				.min(Comparator.comparingInt(Card :: getCaptureOrder))
+				.max(Comparator.comparingInt(Card :: getCaptureOrder))
 				.orElse(cardsInHand.get(0));
 		}
 
@@ -39,8 +39,10 @@ public class ArtificialPlayer extends Player {
 			.collect(Collectors.toList());
 		if (!matchingSuitCards.isEmpty()) {
 			return matchingSuitCards.stream()
-				.min(Comparator.comparingInt(Card::getCaptureOrder))
-				.get();
+				.max(Comparator.comparingInt(Card::getCaptureOrder))
+				.orElseGet(() -> cardsInHand.stream()
+						.max(Comparator.comparingInt(Card::getCaptureOrder))
+						.get());
 		} else {
 			return cardsInHand.stream()
 				.min(Comparator.comparingInt(Card::getCaptureOrder))

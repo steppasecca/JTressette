@@ -47,7 +47,9 @@ public class Team{
 	 * metodi adder
 	 */
 	public void addPlayer(Player player){
-		this.players.add(player);
+		if(!players.contains(player)){
+			this.players.add(player);
+		}
 	}
 
 	public void addTrick(Trick trick){

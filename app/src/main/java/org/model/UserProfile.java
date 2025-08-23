@@ -2,6 +2,8 @@ package org.model;
 
 import java.io.*;
 import java.util.Properties;
+
+import org.model.events.*;
 import java.util.Observable;
 
 /**
@@ -33,13 +35,13 @@ public class UserProfile extends Observable{
 	public void setNickname(String nickname){
 		this.nickname = nickname;
 		setChanged();
-		notifyObservers("nicknameChanged");
+		notifyObservers(new ModelEventMessage(ModelEvent.PROFILE_CHANGED, this));
 	}
 
 	public void setAvatarPath(String avatarPath){
 		this.avatarPath = avatarPath;
 		setChanged();
-		notifyObservers("avatarChanged");
+		notifyObservers(new ModelEventMessage(ModelEvent.PROFILE_CHANGED, this));
 	}
 
 
@@ -55,7 +57,8 @@ public class UserProfile extends Observable{
 		this.gamesPlayed++;
 		if(won){gamesWon++;}
 		setChanged();
-		notifyObservers("statChanged");
+		notifyObservers(new ModelEventMessage(ModelEvent.PROFILE_CHANGED, this));
+	
 	}
 
 	/**

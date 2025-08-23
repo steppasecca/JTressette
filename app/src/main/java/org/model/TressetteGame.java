@@ -2,6 +2,10 @@ package org.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+
+import org.model.events.*;
 
 public class TressetteGame extends AbstractGame{
 
@@ -75,7 +79,7 @@ public class TressetteGame extends AbstractGame{
         
         // La View deve aggiornare lo stato di gioco dopo l'avvio della smazzata
         setChanged();
-        notifyObservers("roundStarted");
+        notifyObservers(new ModelEventMessage(ModelEvent.ROUND_STARTED,null));
     }
     
     @Override
@@ -96,7 +100,7 @@ public class TressetteGame extends AbstractGame{
             currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
 
             setChanged();
-            notifyObservers("turnEnded");
+            notifyObservers(new ModelEventMessage(ModelEvent.TURN_STARTED, currentPlayerIndex));
         } else {
             // La presa è finita, determina il vincitore
             endTrick();
@@ -106,18 +110,34 @@ public class TressetteGame extends AbstractGame{
     /**
      * Termina la presa, determina il vincitore e assegna le carte.
      */
-    private void endTrick() {
-
+	private void endTrick() {
 		Player winner = currentTrick.getWinningPlayer();
-		if(winner!=null){
-			winner.getTeam().addTrick(currentTrick);
-			this.currentPlayerIndex = players.indexOf(winner);
-		}
-		currentTrick.clearTrick();
-        setChanged();
-        notifyObservers("trickEnded");
-    }
+		int winnerIndex = -1;
+		Card winningCard = currentTrick.getWinningCard();
 
+		if (winner != null) {
+			winner.getTeam().addTrick(currentTrick);
+			winnerIndex = players.indexOf(winner);
+			this.currentPlayerIndex = winnerIndex;
+		}
+
+		// build capturedByPlayer: per ciascun giocatore indice -> carte prese in questa presa
+		Map<Integer, List<Card>> capturedByPlayer = new HashMap<>();
+		List<Card> captured = currentTrick.getCards();
+		// semplificato: assegno l'intera lista al vincitore (puoi invece mappare per giocatore se serve)
+		if (winnerIndex >= 0) {
+			capturedByPlayer.put(winnerIndex, captured);
+		}
+
+		// prepara DTO immutabile prima di svuotare la presa
+		TrickResult result = new TrickResult(winnerIndex, winningCard, capturedByPlayer);
+
+		// svuota la presa (i dati già presi nel DTO)
+		currentTrick.clearTrick();
+
+		setChanged();
+		notifyObservers(new ModelEventMessage(ModelEvent.TRICK_ENDED, result));
+	}
     @Override
     public boolean isRoundOver() {
         // La smazzata è finita quando un giocatore non ha più carte
