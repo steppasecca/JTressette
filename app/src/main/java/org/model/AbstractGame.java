@@ -16,10 +16,10 @@ public abstract class AbstractGame extends Observable{
     protected int currentPlayerIndex; //indice del giocator che deve giocare
 
     public AbstractGame() {
-        this.deck = new Deck();
-        this.players = new ArrayList<>();
-        this.teams = new ArrayList<>(); 
-        this.currentTrick = new Trick();
+        this.deck = null;
+        this.players = null;
+        this.teams = null;
+        this.currentTrick = null;
         this.currentPlayerIndex = 0;
     }
 

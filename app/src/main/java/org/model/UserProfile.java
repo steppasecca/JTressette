@@ -3,7 +3,7 @@ package org.model;
 import java.io.*;
 import java.util.Properties;
 
-import org.model.events.*;
+import org.events.*;
 import java.util.Observable;
 
 /**
@@ -32,20 +32,28 @@ public class UserProfile extends Observable{
 	public int getGamesPlayed(){return this.gamesPlayed;}
 	public int getGamesWon() {return this.gamesWon;}
 
+	/**
+	 * setter per il nickname
+	 * @param nickname
+	 * @return void
+	 */
 	public void setNickname(String nickname){
 		this.nickname = nickname;
 		setChanged();
 		notifyObservers(new ModelEventMessage(ModelEvent.PROFILE_CHANGED, this));
 	}
 
+	/**
+	 * setter per l'avatar
+	 *
+	 * @param avatarPath
+	 * @return void
+	 */
 	public void setAvatarPath(String avatarPath){
 		this.avatarPath = avatarPath;
 		setChanged();
 		notifyObservers(new ModelEventMessage(ModelEvent.PROFILE_CHANGED, this));
 	}
-
-
-
 
 	/**
 	 * metodo che aggiorna le statistiche

@@ -6,8 +6,8 @@ package org.events;
 
 public enum ModelEvent{
 	CARDS_DEALT,
+	CARD_PLAYED,
 	TURN_STARTED,
-	TURN_ENDED,
     TRICK_STARTED,
     TRICK_ENDED,
     ROUND_STARTED,

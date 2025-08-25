@@ -15,14 +15,14 @@ public class CapturedCards extends CardSet{
 	/**
      * Calcola il punteggio totale delle carte in questa pila secondo le regole del Tressette.
      *
-     * @return Il punteggio totale.
+     * @return points
      */
-    public int calculateScore() {
-        int score = 0;
+    public int calculatePoints() {
+        int points = 0;
         for (Card card : this.cards) {
-            score += card.getGameValue(); 
+            points += card.getGameValue(); 
         }
-        return score;
+        return points;
     }
 
 	/**

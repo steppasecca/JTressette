@@ -1,8 +1,8 @@
 package org.view;
 
 import org.model.Card;
-import org.model.Rank;
-import org.model.Suit;
+import org.model.Card.Rank;
+import org.model.Card.Suit;
 
 /**
  * Mappa una Card al relativo filename (es. asso_di_spade.jpg).
@@ -25,9 +25,9 @@ public final class CardImageMapper {
             case CINQUE: return "cinque";
             case SEI: return "sei";
             case SETTE: return "sette";
-            case FANTE: return "otto";
-            case CAVALLO: return "nove";
-            case RE: return "dieci";
+            case FANTE: return "fante";
+            case CAVALLO: return "cavallo";
+            case RE: return "re";
             default: return r.name().toLowerCase();
         }
     }

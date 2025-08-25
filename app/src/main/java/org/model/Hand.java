@@ -16,7 +16,7 @@ public class Hand extends CardSet{
 	 * il metodo implementa il meccanismo di giocare una carta
 	 *
 	 * @param card carta da giocare
-	 * @return carta giocata
+	 * @return carta giocata (ha senso tornare la carta giocata??)
 	 */
 
 	public Card playCard(Card card) {
@@ -28,6 +28,7 @@ public class Hand extends CardSet{
 
 	/**
 	 * metodo che ordina le carte in una mano per Seme
+	 * e poi per 
 	 * "controllare che vengano ordinate per seme""
 	 *
 	 * @return void

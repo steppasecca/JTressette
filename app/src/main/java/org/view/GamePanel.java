@@ -99,7 +99,7 @@ public class GamePanel extends JPanel {
     public void updateScores(List<Team> teams) {
         scorePanel.removeAll();
         for (Team t : teams) {
-            String text = t.getTeamName() + ": " + t.calculateTeamScore();
+            String text = t.getTeamName() + ": " + t.calculateTeamPoints();
             scorePanel.add(new JLabel(text));
         }
         scorePanel.revalidate();

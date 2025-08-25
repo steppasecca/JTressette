@@ -1,0 +1,1179 @@
+package org.model;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Observable;
+
+import org.events.*;
+
+
+public abstract class AbstractGame extends Observable{
+
+    protected Deck deck; //mazzo delle carte
+    protected List<Player> players; //lista di giocatori/giocatrici
+    protected List<Team> teams; //lista delle squadre 
+    protected Trick currentTrick; //"giocata" attuale ovvero le carte sul tavolo
+    protected int currentPlayerIndex; //indice del giocator che deve giocare
+
+    public AbstractGame() {
+        this.deck = null;
+        this.players = null;
+        this.teams = null;
+        this.currentTrick = null;
+        this.currentPlayerIndex = 0;
+    }
+
+	/**
+	 * metodo per distribuire le carte ai giocatori
+	 *
+	 * @return void
+	 */
+
+	protected void dealCards() { 
+		int cardsPerPlayer = 10;
+		for(int i = 0;i<cardsPerPlayer;i++){
+			for(Player player : players){
+				if(deck.isEmpty()){
+					throw new IllegalStateException("errore ho cercato di distribuire carte da un mazzo vuoto");
+				}
+				else{
+					if(player.getHand() == null){
+						player.setHand(new Hand());
+					}
+					player.getHand().addCard(deck.drawCard());
+				}
+			}
+		}
+		setChanged();
+		notifyObservers(new ModelEventMessage(ModelEvent.CARDS_DEALT,null));
+	}
+	
+    /**
+     * Metodo astratto per gestire la logica di un singolo turno.
+     */
+    public abstract void nextTurn();
+
+    /**
+     * Metodo astratto per verificare se una smazzata è terminata.
+     * @return true se la smazzata è finita, altrimenti false.
+     */
+    public abstract boolean isRoundOver();
+
+    /**
+     * Metodo astratto per verificare se la partita è terminata.
+     * @return true se la partita è finita, altrimenti false.
+     */
+    public abstract boolean isGameOver();
+    
+	/**
+    * Getters per accedere al mazzo
+	*/
+    public Deck getDeck() {
+        return deck;
+    }
+
+	/**
+	 * @return players getter per la lista delle giocatrici	
+	 */
+    public List<Player> getPlayers() {
+        return players;
+    }
+
+	/**
+	 * @return List<Team> teams getter per la lista delle squadre
+	 */
+    public List<Team> getTeams() {
+        return teams;
+    }
+    
+	/**
+	 * @return Trick currentTrick il trick corrente 
+	 */
+    public Trick getCurrentTrick() {
+        return currentTrick;
+    }
+    
+	/**
+	 * @return currentPlayerIndex indece del giocatore corrente
+	 */
+    public int getCurrentPlayerIndex() {
+        return currentPlayerIndex;
+    }
+}
+package org.model;
+
+import java.util.List;
+import java.util.Comparator;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+/**
+ * Rappresenta un giocatore controllato dall'intelligenza artificiale.
+ * Contiene la logica per decidere quale carta giocare.
+ */
+public class ArtificialPlayer extends Player {
+
+	public ArtificialPlayer(String name) {
+		super(name);
+	}
+
+	/**
+	 * L'intelligenza artificiale gioca una carta.
+	 * @return La carta che l'IA ha deciso di giocare.
+	 */
+
+	public Card chooseCardToPlay(Trick currentTrick) {
+		List<Card> hand = getHand().getCards();
+		if (hand.isEmpty()) return null; // non dovrebbe capitare, ma è sicuro gestirlo
+
+		// Ordini utili
+		Comparator<Card> byOrderAsc  = Comparator.comparingInt(Card::getCaptureOrder); // più bassa prima
+		Comparator<Card> byOrderDesc = byOrderAsc.reversed();
+
+		// Helper: tra più carte, prova prima a scegliere una senza punti (gameValue == 0), altrimenti la più bassa
+		java.util.function.Supplier<Card> lowestOverall =
+			() -> hand.stream().min(byOrderAsc).orElse(hand.get(0));
+		java.util.function.Supplier<Card> lowestNoPointsOverall =
+			() -> hand.stream()
+			.filter(c -> c.getGameValue() == 0)
+			.min(byOrderAsc)
+			.orElse(null);
+
+		// 1) Sei il primo a giocare nel Trick
+		if (currentTrick.isEmpty()) {
+			// Apri (se possibile) con la più bassa senza punti; altrimenti con la più bassa in assoluto
+			Card np = lowestNoPointsOverall.get();
+			return (np != null) ? np : lowestOverall.get();
+		}
+
+		// 2) Devi rispondere al seme (se lo hai)
+		Card leading = currentTrick.getPlays().get(0).getCard();
+		Card winningSoFar = currentTrick.getWinningCard(); // carta attualmente vincente nel trick
+
+		List<Card> sameSuit = hand.stream()
+			.filter(c -> c.getSuit() == leading.getSuit())
+			.collect(java.util.stream.Collectors.toList());
+
+		if (!sameSuit.isEmpty()) {
+			// Tra le carte del seme, cerca la più bassa che BATTE la vincente attuale
+			Optional<Card> smallestThatBeats = sameSuit.stream()
+				.filter(c -> c.getCaptureOrder() > winningSoFar.getCaptureOrder())
+				.min(byOrderAsc);
+
+			if (smallestThatBeats.isPresent()) {
+				// Puoi vincere: batti spendendo il minimo indispensabile
+				return smallestThatBeats.get();
+			} else {
+				// Non puoi vincere: risparmia → la più bassa del seme, preferendo carte senza punti
+				Card lowestNoPointsSameSuit = sameSuit.stream()
+					.filter(c -> c.getGameValue() == 0)
+					.min(byOrderAsc)
+					.orElse(null);
+				return (lowestNoPointsSameSuit != null)
+					? lowestNoPointsSameSuit
+					: sameSuit.stream().min(byOrderAsc).get();
+			}
+		}
+
+		// 3) Non hai il seme richiesto: scarta (meglio una carta senza punti, altrimenti la più bassa)
+		Card np = lowestNoPointsOverall.get();
+		return (np != null) ? np : lowestOverall.get();
+	}
+}
+package org.model;
+
+import java.util.ArrayList;
+
+/**
+ * classe che rappresenta le carte "prese" da un player o da una squadra
+ */
+
+public class CapturedCards extends CardSet{
+
+	public CapturedCards(){
+		super(new ArrayList<>());
+	}
+
+	/**
+     * Calcola il punteggio totale delle carte in questa pila secondo le regole del Tressette.
+     *
+     * @return points
+     */
+    public int calculatePoints() {
+        int points = 0;
+        for (Card card : this.cards) {
+            points += card.getGameValue(); 
+        }
+        return points;
+    }
+
+	/**
+	 * aggiunge una giocata dal tavolo
+	 * @param Trick trick
+	 * @return void
+	 */
+	public void addTrickCards(Trick trick){
+		this.cards.addAll(trick.getAndClearTrick());
+	}
+	
+}
+package org.model;
+
+import java.util.Objects;
+
+/**
+ * rappresenta una singola carta 
+ */
+
+public class Card implements Comparable<Card>{
+
+	private final Suit suit; //seme della carta
+	private final Rank rank; //tipo di carta indice di presa e valore nel calcolo del punteggio
+
+	public Card(Suit suit, Rank rank){
+		this.rank = rank;
+		this.suit = suit;
+	};
+
+	@Override
+	 public String toString(){
+		 return rank + "di" + suit; 
+	 }
+
+	//metodi getters
+	
+	public Suit getSuit(){
+		return this.suit;
+	}
+
+	public Rank getRank(){
+		return this.rank;
+	}
+
+	public double getGameValue(){
+		return rank.getTressetteValue()/3;
+	}
+	public int getCaptureOrder(){
+		return rank.getCaptureOrder();
+	}
+
+	/**
+	 * ovveride del metodo equals per confrontare due carte
+	 * @param Object o
+	 * @return true se sono uguali
+	 */
+	@Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Card card = (Card) o;
+        return suit == card.suit && rank == card.rank;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(suit, rank);
+    }
+
+	/**
+	 * metodo per confrontare due carte rispetto al loro ordine di cattura
+	 *
+	 * @param other Card
+	 * @return  un valore positivo se this maggiore other
+	 */
+
+	@Override
+	public int compareTo(Card other){
+		if(this.getSuit() != other.getSuit()){
+			throw new IllegalArgumentException("le carte non possono essere confrontate fra semi diversi");
+		}
+		return Integer.compare(this.getCaptureOrder(),other.getCaptureOrder());
+	}
+	
+	public enum Suit{
+		SPADE,BASTONI,COPPE,DENARI
+	}
+
+   public enum Rank {
+        ASSO(3,8), DUE(1,9), TRE(1,10), 
+		QUATTRO(0,1), CINQUE(0,2), SEI(0,3), 
+		SETTE(0,4), FANTE(1,5), 
+		CAVALLO(1,6), RE(1,7);
+
+        private final int tressetteValue;
+		private final int captureOrder;
+
+        Rank(int tressetteValue,int captureOrder) {
+            this.tressetteValue = tressetteValue;
+			this.captureOrder = captureOrder;
+        }
+
+        public int getTressetteValue() {
+            return tressetteValue;
+        }
+
+		public int getCaptureOrder(){
+			return captureOrder;
+		}
+    }
+}
+package org.model;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * classe che modella un insieme di carte 
+ */
+
+public abstract class CardSet { 
+
+	protected List<Card> cards;
+
+
+	public CardSet(List<Card> cards){
+		this.cards = new ArrayList<>(cards);
+	}
+
+	/**
+	 * metodo che ritorna la lista delle carte
+	 * @return List<Card> cards
+	 */
+	public List<Card> getCards(){
+		return cards;
+	}
+
+	/**
+	 *aggiunge una carta all'insime di carte 
+	 * @param card la carta da aggiungere.
+	 */
+	public void addCard(Card card){
+		this.cards.add(card);
+	}
+
+	/**
+	 *rimuove una arta specifica dall'insieme 
+	 *@param  card la carta da rimuovere
+	 * @return true se la carta è stata rimossa con successo
+	 */
+
+	public boolean removeCard(Card card){
+		return this.cards.remove(card);
+	}
+
+	/**
+	 * 
+	 * restituisce il numero di carte dell'insieme
+	 * @return int numero di carte
+	 */
+
+	public int getSizeOfCardSet(){
+		return this.cards.size();
+	}
+
+    /**
+     * Controlla se l'insieme di carte è vuoto.
+     * @return true se l'insieme è vuoto, false altrimenti.
+     */
+    public boolean isEmpty() {
+        return this.cards.isEmpty();
+    }
+
+	public boolean containsCard(Card card){
+		return cards.contains(card);
+	}
+}
+
+package org.model;
+
+import java.util.ArrayList;
+import java.util.Collections;
+
+/**
+ * classe che rappresenta il mazzo di carte
+ */
+
+public class Deck extends CardSet {
+	
+	/**
+	 * il costruttore genera un mazzo da 40 carte e lo mischia
+	 *
+	 * @author steppasecca
+	 */
+
+	public Deck(){
+		super(new ArrayList<>());
+		initializeDeck();
+		shuffle();
+	}
+
+	/**
+	 * metodo che inizializza il mazzo aggiungendo tutte le carte
+	 * @return void
+	 */
+	private void initializeDeck(){
+		for(Card.Suit suit : Card.Suit.values()){
+			for(Card.Rank rank : Card.Rank.values()){
+				this.addCard(new Card(suit,rank));
+			}
+		}
+	}
+
+	/**
+	 * metodo che mischia le carte
+	 * @return void
+	 */
+	
+	public void shuffle(){
+		Collections.shuffle(this.cards);
+	}
+
+	/**
+	 * metodo che rappresenta il pescare una carta
+	 *
+	 * @return card Card la carta pescata
+	 */
+	public Card drawCard(){
+		if (isEmpty()){
+			throw new IllegalStateException("il mazzo è vuoto, impossibile pescare");
+		}
+		return this.cards.remove(this.cards.size()-1);
+	}
+
+}
+package org.model;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * strategia per la modalità di gioco a quattro giocatori
+ */
+
+public class FourPlayerStrategy implements GameModeStrategy {
+
+	@Override
+	public int getPlayersPerTeam(){return 2;}
+
+}
+package org.model;
+
+import java.util.List;
+
+/**
+ * Interfaccia per il pattern strategy che definisce la modalità di gioco
+ *
+ * @author steppasecca
+ */
+
+public interface GameModeStrategy {
+
+	int getPlayersPerTeam();
+	
+}
+package org.model;
+/**
+ * questa classe rappresenta le carte in che un giocatore/giocatrice ha in mano
+ */
+
+import java.util.Collections;
+import java.util.ArrayList;
+
+public class Hand extends CardSet{
+
+	public Hand(){
+		super(new ArrayList<>());
+	}
+
+	/**
+	 * il metodo implementa il meccanismo di giocare una carta
+	 *
+	 * @param card carta da giocare
+	 * @return carta giocata (ha senso tornare la carta giocata??)
+	 */
+
+	public Card playCard(Card card) {
+		if (!this.cards.contains(card)){
+			throw new IllegalArgumentException("la carta" + card +  "non è presente nel mazzo" ); }
+		this.removeCard(card);
+		return card;
+	}
+
+	/**
+	 * metodo che ordina le carte in una mano per Seme
+	 * e poi per 
+	 * "controllare che vengano ordinate per seme""
+	 *
+	 * @return void
+	 */
+public void sort() {
+    Collections.sort(this.cards, (c1, c2) -> {
+        int suitCmp = c1.getSuit().ordinal() - c2.getSuit().ordinal();
+        if (suitCmp != 0) return suitCmp;
+        return Integer.compare(c1.getCaptureOrder(), c2.getCaptureOrder());
+    });
+}
+
+
+
+	
+}
+
+package org.model;
+
+/**
+ * Rappresenta un giocatore controllato da un essere umano.
+ */
+public class HumanPlayer extends Player {
+
+    public HumanPlayer(String name) {
+        super(name);
+    }
+}
+package org.model;
+
+/**
+ * classe che rappresenta un giocatore nel gioco del tressette
+ *
+ * @author steppasecca
+ */
+
+public abstract class Player{
+
+	private String nome;
+	private Hand hand; //mano ,insieme delle carte giocabili da un giocatore 
+	private Team team;
+
+	public Player(String nome){
+		this.nome = nome;
+		this.hand = null;
+		this.team = null;
+	}
+	
+	/**
+	 * il metodo gioca una carta dalla mano del giocatr.
+	 *
+	 * @param card 
+	 * @return void
+	 */
+	public void playCard(Card card){
+		hand.playCard(card);
+	}
+
+	/**
+	 * metodo che ritorna il nome della giocatrice
+	 *
+	 * @return name String
+	 */
+	public String getNome(){
+		return this.nome;
+	}
+
+	/**
+	 * getter per la mano del giocatrice
+	 * @return hand
+	 */
+	public Hand getHand(){
+		return hand;
+	}
+
+	/**
+	 * getter per la squadra del giocatore
+	 * @return team
+	 */
+	public Team getTeam(){
+		return this.team;
+	}
+
+	/**
+	 * setter per il nome del giocatore
+	 * @param String nome
+	 * @return void
+	 */
+	public void setNome(String nome){
+		this.nome = nome;
+	}
+
+	/**
+	 * setter per la mano
+	 * @param Hand hand
+	 * @return void
+	 */
+	public void setHand(Hand hand){
+		this.hand = hand;
+	}
+
+	/**
+	 * setta la squadra e aggiunge il giocatore alla squadra stessa
+	 * @param Team team
+	 * @return void
+	 */
+	public void setTeam(Team team){
+		this.team = team;
+		if(team != null){
+			team.addPlayer(this);
+		}
+	}
+}
+package org.model;
+
+/**
+ * classe che rappresenta una "giocata"
+ * quindi un'associazione tra carta giocata e giocatrice/giocatore
+ */
+
+public class Play{
+	private final Player player;
+	private final Card card;
+
+	public Play(Player player,Card card){
+		this.player = player;
+		this.card = card;
+	}
+
+	public Player getPlayer(){return this.player;}
+	public Card getCard(){return this.card;}
+}
+
+package org.model;
+
+import java.util.ArrayList;
+import java.util.List;
+/**
+ * classe che rappresenta una squadra
+ *
+ * @author steppasecca
+ */
+
+public class Team{
+
+	private String teamName;
+	private List<Player> players; //lista giocatrici nella squadra
+	private CapturedCards capturedCards; //lista delle "prese"
+	private int roundPoints;  //punti della squadra
+
+	public Team(String teamName){
+		this.teamName = teamName;
+		this.capturedCards = new CapturedCards();
+		this.players = new ArrayList<>();
+		this.roundPoints = 0;
+	}
+	/**
+	 *getter per il nome della squadra
+	 *@return nome
+	 */
+
+	public String getTeamName(){
+		return this.teamName;
+	}
+
+	/**
+	 * @return List of players
+	 */
+
+	public List<Player> getPlayers(){
+		return players;
+	}
+
+	/**
+	 * @return Captured Cards
+	 */
+	public CapturedCards getCapturedCards(){
+		return capturedCards;
+	}
+
+
+	/**
+	 * @return roundPoints
+	 */
+	public int getTeamPoints(){
+		return this.roundPoints;
+	}
+
+
+
+	/**
+	 * aggiunge un player alla squadra
+	 * @param player
+	 * @return void
+	 */
+	public void addPlayer(Player player){
+		if(!players.contains(player)){
+			this.players.add(player);
+		}
+	}
+	
+	/**
+	 * aggiunge un trick alle carte prese
+	 * @param trick
+	 * @return void
+	 */
+	public void addTrick(Trick trick){
+		this.capturedCards.addTrickCards(trick);
+	}
+
+	/**
+	 * @param roundPoints
+	 * @return void
+	 */
+	public void addRoudPoints(int roundPoints){
+		this.roundPoints+=roundPoints;
+	}
+
+	/**
+	 * metodo che calcola il punteggio delle carte prese
+	 * @return score
+	 */
+	public int calculateTeamPoints(){
+		return this.capturedCards.calculatePoints();
+	}
+	
+	public void resetCapturedCards() {
+		this.capturedCards = new CapturedCards();
+	}
+
+}
+package org.model;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+
+import org.events.*;
+
+public class TressetteGame extends AbstractGame{
+
+	private GameModeStrategy gameMode; //classe che rappresenta la strategia
+	private final UserProfile userProfile; //penso si possa eliminare questo
+	private static final int DEFAULT_WINNING_SCORE = 21; //punteggio massimo del tresetto magari poi lo metto come opzione
+	private final int teamsCount = 2; //quantità di squadre in una partita del tressette
+
+	/**
+     * Costruttore che accetta una strategia per la modalità di gioco e un profilo utente.
+     * @param gameMode La strategia per la configurazione dei giocatori e delle squadre.
+	 * @param userProfile
+     */
+    public TressetteGame(GameModeStrategy gameMode,UserProfile userProfile) {
+        super();
+        this.gameMode = gameMode;
+		this.userProfile = userProfile;
+        setupGame(userProfile);
+    }
+	/**
+     * Metodo di configurazione che utilizza la strategia per inizializzare giocatori e squadre.
+	 * @param userProfile
+	 * @return void
+     */
+    private void setupGame(UserProfile profile) {
+        this.teams = new ArrayList<>();
+		this.players = new ArrayList<>();
+		this.players.clear();
+
+		int playersPerTeam = gameMode.getPlayersPerTeam();
+		int aiCounter = 1;
+
+		for(int t = 0;t<teamsCount;t++){
+			Team team = new Team("squadra " + (t+1));
+			
+			for(int p = 0;p<playersPerTeam;p++){
+				Player newPlayer;
+				// riserva il primo slot al giocatore umano (se presente)
+                boolean isHumanSlot = (t == 0 && p == 0) && profile != null;
+                if (isHumanSlot) {
+                    String nick = profile.getNickname() != null && !profile.getNickname().isBlank()
+                            ? profile.getNickname() : "HumanPlayer";
+                    newPlayer = new HumanPlayer(nick);
+                } else {
+                    newPlayer = new ArtificialPlayer("ArtificialPlayer " + (aiCounter++));
+                }
+                newPlayer.setTeam(team);
+                // aggiungi alla lista globale di giocatori
+                this.players.add(newPlayer);
+            }
+            this.teams.add(team);
+        }
+
+	}
+
+    /**
+     * Avvia una nuova partita: mischia il mazzo e distribuisce le carte.
+     */
+    public void startGame() {
+		startRound();
+    }
+
+    /**
+     * Avvia una nuova smazzata: mischia il mazzo e distribuisce le carte.
+     */
+    public void startRound() {
+        this.deck = new Deck(); // Crea un nuovo mazzo round
+        this.deck.shuffle();
+        this.dealCards();
+        this.currentTrick = new Trick();
+        this.currentPlayerIndex = 0;
+		for(Player player: players){
+			player.getHand().sort();
+		} //ordina le carte delle giocatrici
+        
+        // La View deve aggiornare lo stato di gioco dopo l'avvio della smazzata
+        setChanged();
+        notifyObservers(new ModelEventMessage(ModelEvent.ROUND_STARTED,null));
+    }
+    
+	/**
+	 * gestisceil passaggio al prossimo turno
+	 * @return void
+	 */
+    @Override
+    public void nextTurn() {
+        if (currentTrick.size() < players.size()) {
+            Player currentPlayer = players.get(currentPlayerIndex);
+            
+            // Sposta il turno al prossimo giocatore
+            currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
+
+            setChanged();
+            notifyObservers(new ModelEventMessage(ModelEvent.TURN_STARTED, currentPlayerIndex));
+        } else {
+            // La presa è finita, determina il vincitore
+            endTrick();
+        }
+    }
+
+    /**
+     * Termina la presa, determina il vincitore e assegna le carte.
+     */
+	private void endTrick() {
+		Player winner = currentTrick.getWinningPlayer();
+		int winnerIndex = -1;
+		Card winningCard = currentTrick.getWinningCard();
+
+		if (winner != null) {
+			winner.getTeam().addTrick(currentTrick);
+			winnerIndex = players.indexOf(winner);
+			this.currentPlayerIndex = winnerIndex;
+		}
+		setChanged();
+		notifyObservers(new ModelEventMessage(ModelEvent.TRICK_ENDED, null));
+	}
+
+	/**
+	 * controlla se una mossa è valida
+	 * @param Play play
+	 * @return true se la giocata è valida
+	 */
+	public boolean isValidPlay(Play play) {
+		Player player = play.getPlayer();
+		Card card = play.getCard();
+
+		// Deve essere il turno giusto
+		if (players.get(currentPlayerIndex) != player) return false;
+
+		// La carta deve stare nella mano
+		if (!player.getHand().containsCard(card)) return false;
+
+		// Se non è il primo della mano, deve rispondere al seme
+		if (!currentTrick.isEmpty()) {
+			Card leadingCard = currentTrick.getPlays().get(0).getCard();
+			boolean hasSuit = player.getHand().getCards().stream()
+				.anyMatch(c -> c.getSuit() == leadingCard.getSuit());
+			if (hasSuit && card.getSuit() != leadingCard.getSuit()) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * esegue una giocata se è valida
+	 *
+	 * @param play (carta e giocatore che la gioca)
+	 * @return true se la carta è stata giocata, false altrimenti
+	 */
+	public boolean playCard(Play play){
+
+		if(!isValidPlay(play)){
+			return false;
+		}
+
+		Player player = play.getPlayer();
+		Card card = play.getCard();
+
+		//il giocatore gioca la carte e la aggiunge al trick
+		player.playCard(card);
+		currentTrick.addPlay(play);
+
+		//notifico la view
+		setChanged();
+		notifyObservers(new ModelEventMessage(ModelEvent.CARD_PLAYED,play));
+		
+		//avanza il turno
+		nextTurn();
+
+		return true;
+	}
+
+	/**
+	 * @return true if the round is over
+	 */
+    @Override
+    public boolean isRoundOver() {
+        // La smazzata è finita quando un giocatore non ha più carte
+        return players.stream().allMatch(player -> player.getHand().isEmpty());
+    }
+
+	/**
+	 * @return true if the game is over
+	 */
+    @Override
+    public boolean isGameOver() {
+        for (Team team : teams) {
+            // La partita finisce quando una squadra raggiunge o supera i 21 punti
+            if (team.calculateTeamPoints() >= 21) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+	/**
+	 * calcola i punti di un round
+	 * @param param the param
+	 * @param anotherParam the anotherParam
+	 * @return description of return value
+	 */
+    public void calculateRoundPoints() {
+        for (Team team : teams) {
+            int teamScore = team.calculateTeamPoints();
+            System.out.println("Punteggio " + team.getTeamName() + ": " + teamScore);
+        }
+    }
+}
+package org.model;
+
+import java.util.List;
+import java.util.ArrayList;
+
+/**
+ * classe che rappresenta le carte sul tavolo durante una mano di gioco
+ */
+
+public class Trick {
+
+	private Play firstPlay = null;
+	private final List<Play> plays  = new ArrayList<>();
+
+	/**
+	 * aggiunge una giocata alla lista delle giocate
+	 *
+	 * @param player
+	 * @param card
+	 * @return void
+	 */
+	public void addPlay(Play play){
+		plays.add(play);
+		if(plays.size() == 1) firstPlay = play;
+	}
+
+	/**
+	 * ritorna la lista delle giocate
+	 * @return plays
+	 */
+	public List<Play> getPlays(){
+		//per quale ragione tornare un nuovo oggetto?
+		return new ArrayList<>(plays);
+	}
+
+	/**
+	 * metodo che ritorna la carta vincente
+	 * @return winningCard
+	 */
+	public Card getWinningCard() {
+        if (plays.isEmpty()) return null;
+        Card winning = firstPlay.getCard();
+        for (Play p : plays) {
+            Card c = p.getCard();
+            if (c.getSuit() == firstPlay.getCard().getSuit()) {
+                if (c.getCaptureOrder() > winning.getCaptureOrder()) {
+                    winning = c;
+                }
+            }
+        }
+        return winning;
+    }
+
+	/**
+	 * metodo che ritorna il giocatore vincitore
+	 * @return winningPlayer
+	 */
+    public Player getWinningPlayer() {
+        Card winningCard = getWinningCard();
+        if (winningCard == null) return null;
+        for (Play p : plays) {
+            if (p.getCard().equals(winningCard)) return p.getPlayer();
+        }
+        return null;
+    }
+
+	/**
+	 * metodo che ritorna la lista delle carte nel trick e lo pulisce
+	 * @return cards
+	 */
+    public List<Card> getAndClearTrick() {
+        List<Card> cards = new ArrayList<>();
+        for (Play p : plays) cards.add(p.getCard());
+        plays.clear();
+        firstPlay = null;
+        return cards;
+    }
+
+	/**
+	 * metodo che ritorna le carte nel trick
+	 * (penso si possa eliminare)
+	 * @return cards
+	 */
+	public List<Card> getCards(){
+		List<Card> cards = new ArrayList<>();
+        for (Play p : plays) cards.add(p.getCard());
+		return cards;
+	}
+
+    public boolean isEmpty() { return plays.isEmpty(); }
+    public int size() { return plays.size(); }
+}
+
+package org.model;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * strategia per la modalità di gioco a quattro giocatori
+ */
+
+public class TwoPlayerStrategy implements GameModeStrategy {
+
+	@Override
+	public int getPlayersPerTeam(){return 1;}
+
+}
+package org.model;
+
+import java.io.*;
+import java.util.Properties;
+
+import org.events.*;
+import java.util.Observable;
+
+/**
+ * modella il profilo di un utente
+ */
+
+public class UserProfile extends Observable{
+
+	private String nickname;
+	private String avatarPath;
+	private int gamesWon;
+	private int gamesPlayed;
+
+	public UserProfile(String nickname){
+
+		this.nickname = nickname;
+		this.avatarPath = "";
+		this.gamesPlayed = 0;
+		this.gamesWon = 0;
+	}	
+
+	//metodi getter e setter
+
+	public String getNickname(){return this.nickname;}
+	public String getAvatarPath(){return avatarPath;}
+	public int getGamesPlayed(){return this.gamesPlayed;}
+	public int getGamesWon() {return this.gamesWon;}
+
+	/**
+	 * setter per il nickname
+	 * @param nickname
+	 * @return void
+	 */
+	public void setNickname(String nickname){
+		this.nickname = nickname;
+		setChanged();
+		notifyObservers(new ModelEventMessage(ModelEvent.PROFILE_CHANGED, this));
+	}
+
+	/**
+	 * setter per l'avatar
+	 *
+	 * @param avatarPath
+	 * @return void
+	 */
+	public void setAvatarPath(String avatarPath){
+		this.avatarPath = avatarPath;
+		setChanged();
+		notifyObservers(new ModelEventMessage(ModelEvent.PROFILE_CHANGED, this));
+	}
+
+	/**
+	 * metodo che aggiorna le statistiche
+	 * @param won boolean
+	 * @return void
+	 */
+
+	public void addGame(boolean won){
+		this.gamesPlayed++;
+		if(won){gamesWon++;}
+		setChanged();
+		notifyObservers(new ModelEventMessage(ModelEvent.PROFILE_CHANGED, this));
+	
+	}
+
+	/**
+	 * metodo che salva il profile su un file
+	 *
+	 * @param file File
+	 * @return void
+	 */
+
+	public void saveToProperties(File file) throws IOException{
+		Properties props = new Properties();
+		props.setProperty("nickname",nickname);
+		props.setProperty("avatarPath", avatarPath == null ? "" : avatarPath);
+		props.setProperty("gamesPlayed", String.valueOf(gamesPlayed));
+		props.setProperty("gamesWon", String.valueOf(gamesWon));
+		try (FileOutputStream fos = new FileOutputStream(file)) {
+			props.store(fos, "User Profile");
+		}
+	}
+
+	public static UserProfile loadFromProperties(File file) throws IOException {
+		if (!file.exists()) {
+			return new UserProfile("Player");
+		}
+
+		Properties props = new Properties();
+		try (FileInputStream fis = new FileInputStream(file)) {
+			props.load(fis);
+		}
+
+		UserProfile profile = new UserProfile(props.getProperty("nickname", "Player"));
+		profile.avatarPath = props.getProperty("avatarPath", "");
+
+		try {
+			profile.gamesPlayed = Integer.parseInt(props.getProperty("gamesPlayed", "0"));
+		} catch (NumberFormatException e) {
+			profile.gamesPlayed = 0;
+		}
+
+		try {
+			profile.gamesWon = Integer.parseInt(props.getProperty("gamesWon", "0"));
+		} catch (NumberFormatException e) {
+			profile.gamesWon = 0;
+		}
+
+		return profile;
+	}
+
+}

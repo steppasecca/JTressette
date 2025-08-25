@@ -11,64 +11,84 @@ import java.util.List;
 public class Team{
 
 	private String teamName;
-	private List<Player> players;
-	private CapturedCards capturedCards;
-	private int roundScore;
+	private List<Player> players; //lista giocatrici nella squadra
+	private CapturedCards capturedCards; //lista delle "prese"
+	private int roundPoints;  //punti della squadra
 
 	public Team(String teamName){
 		this.teamName = teamName;
 		this.capturedCards = new CapturedCards();
 		this.players = new ArrayList<>();
-		this.roundScore = 0;
+		this.roundPoints = 0;
 	}
 	/**
-	 * metodi getters
+	 *getter per il nome della squadra
+	 *@return nome
 	 */
 
 	public String getTeamName(){
 		return this.teamName;
 	}
 
+	/**
+	 * @return List of players
+	 */
+
 	public List<Player> getPlayers(){
 		return players;
 	}
 
+	/**
+	 * @return Captured Cards
+	 */
 	public CapturedCards getCapturedCards(){
 		return capturedCards;
 	}
 
-	public int getRoundScore(){
-		return this.roundScore;
+
+	/**
+	 * @return roundPoints
+	 */
+	public int getTeamPoints(){
+		return this.roundPoints;
 	}
 
 
 
 	/**
-	 * metodi adder
+	 * aggiunge un player alla squadra
+	 * @param player
+	 * @return void
 	 */
 	public void addPlayer(Player player){
 		if(!players.contains(player)){
 			this.players.add(player);
 		}
 	}
-
+	
+	/**
+	 * aggiunge un trick alle carte prese
+	 * @param trick
+	 * @return void
+	 */
 	public void addTrick(Trick trick){
 		this.capturedCards.addTrickCards(trick);
 	}
 
-	public void addRoundScore(int score){
-		this.roundScore+=score;
+	/**
+	 * @param roundPoints
+	 * @return void
+	 */
+	public void addRoudPoints(int roundPoints){
+		this.roundPoints+=roundPoints;
 	}
 
 	/**
 	 * metodo che calcola il punteggio delle carte prese
-	 *
-	 * @param  
-	
 	 * @return score
 	 */
-	public int calculateTeamScore(){
-		return this.capturedCards.calculateScore();
+	public int calculateTeamPoints(){
+		return this.capturedCards.calculatePoints();
 	}
 	
 	public void resetCapturedCards() {

@@ -5,18 +5,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
-import org.model.events.*;
+import org.events.*;
 
 public class TressetteGame extends AbstractGame{
 
-	private GameModeStrategy gameMode;
-	private final UserProfile userProfile;
-	private static final int DEFAULT_WINNING_SCORE = 21;
-	private final int teamsCount = 2;
+	private GameModeStrategy gameMode; //classe che rappresenta la strategia
+	private final UserProfile userProfile; //penso si possa eliminare questo
+	private static final int DEFAULT_WINNING_SCORE = 21; //punteggio massimo del tresetto magari poi lo metto come opzione
+	private final int teamsCount = 2; //quantità di squadre in una partita del tressette
 
 	/**
-     * Costruttore che accetta una strategia per la modalità di gioco.
+     * Costruttore che accetta una strategia per la modalità di gioco e un profilo utente.
      * @param gameMode La strategia per la configurazione dei giocatori e delle squadre.
+	 * @param userProfile
      */
     public TressetteGame(GameModeStrategy gameMode,UserProfile userProfile) {
         super();
@@ -26,16 +27,19 @@ public class TressetteGame extends AbstractGame{
     }
 	/**
      * Metodo di configurazione che utilizza la strategia per inizializzare giocatori e squadre.
+	 * @param userProfile
+	 * @return void
      */
     private void setupGame(UserProfile profile) {
         this.teams = new ArrayList<>();
+		this.players = new ArrayList<>();
 		this.players.clear();
 
 		int playersPerTeam = gameMode.getPlayersPerTeam();
 		int aiCounter = 1;
 
 		for(int t = 0;t<teamsCount;t++){
-			Team team = new Team("Team " + (t+1));
+			Team team = new Team("squadra " + (t+1));
 			
 			for(int p = 0;p<playersPerTeam;p++){
 				Player newPlayer;
@@ -43,12 +47,11 @@ public class TressetteGame extends AbstractGame{
                 boolean isHumanSlot = (t == 0 && p == 0) && profile != null;
                 if (isHumanSlot) {
                     String nick = profile.getNickname() != null && !profile.getNickname().isBlank()
-                            ? profile.getNickname() : "Player";
+                            ? profile.getNickname() : "HumanPlayer";
                     newPlayer = new HumanPlayer(nick);
                 } else {
-                    newPlayer = new ArtificialPlayer("AI " + (aiCounter++));
+                    newPlayer = new ArtificialPlayer("ArtificialPlayer " + (aiCounter++));
                 }
-                // imposta team usando setTeam per mantenere l'unica sorgente di verità
                 newPlayer.setTeam(team);
                 // aggiungi alla lista globale di giocatori
                 this.players.add(newPlayer);
@@ -62,19 +65,17 @@ public class TressetteGame extends AbstractGame{
      * Avvia una nuova partita: mischia il mazzo e distribuisce le carte.
      */
     public void startGame() {
-        this.deck.shuffle();
-        this.dealCards();
-        // Altre inizializzazioni, come la gestione del primo giocatore
+		startRound();
     }
 
     /**
      * Avvia una nuova smazzata: mischia il mazzo e distribuisce le carte.
      */
     public void startRound() {
-        this.deck = new Deck(); // Crea un nuovo mazzo per ogni smazzata
+        this.deck = new Deck(); // Crea un nuovo mazzo round
         this.deck.shuffle();
         this.dealCards();
-        this.currentTrick.clearTrick();
+        this.currentTrick = new Trick();
         this.currentPlayerIndex = 0;
 		for(Player player: players){
 			player.getHand().sort();
@@ -85,6 +86,10 @@ public class TressetteGame extends AbstractGame{
         notifyObservers(new ModelEventMessage(ModelEvent.ROUND_STARTED,null));
     }
     
+	/**
+	 * gestisceil passaggio al prossimo turno
+	 * @return void
+	 */
     @Override
     public void nextTurn() {
         if (currentTrick.size() < players.size()) {
@@ -114,45 +119,99 @@ public class TressetteGame extends AbstractGame{
 			winnerIndex = players.indexOf(winner);
 			this.currentPlayerIndex = winnerIndex;
 		}
+		setChanged();
+		notifyObservers(new ModelEventMessage(ModelEvent.TRICK_ENDED, null));
+	}
 
-		// build capturedByPlayer: per ciascun giocatore indice -> carte prese in questa presa
-		Map<Integer, List<Card>> capturedByPlayer = new HashMap<>();
-		List<Card> captured = currentTrick.getCards();
-		// semplificato: assegno l'intera lista al vincitore (puoi invece mappare per giocatore se serve)
-		if (winnerIndex >= 0) {
-			capturedByPlayer.put(winnerIndex, captured);
+	/**
+	 * controlla se una mossa è valida
+	 * @param Play play
+	 * @return true se la giocata è valida
+	 */
+	public boolean isValidPlay(Play play) {
+		Player player = play.getPlayer();
+		Card card = play.getCard();
+
+		// Deve essere il turno giusto
+		if (players.get(currentPlayerIndex) != player) return false;
+
+		// La carta deve stare nella mano
+		if (!player.getHand().containsCard(card)) return false;
+
+		// Se non è il primo della mano, deve rispondere al seme
+		if (!currentTrick.isEmpty()) {
+			Card leadingCard = currentTrick.getPlays().get(0).getCard();
+			boolean hasSuit = player.getHand().getCards().stream()
+				.anyMatch(c -> c.getSuit() == leadingCard.getSuit());
+			if (hasSuit && card.getSuit() != leadingCard.getSuit()) {
+				return false;
+			}
 		}
 
-		// prepara DTO immutabile prima di svuotare la presa
-		TrickResult result = new TrickResult(winnerIndex, winningCard, capturedByPlayer);
-
-		// svuota la presa (i dati già presi nel DTO)
-		currentTrick.clearTrick();
-
-		setChanged();
-		notifyObservers(new ModelEventMessage(ModelEvent.TRICK_ENDED, result));
+		return true;
 	}
+
+	/**
+	 * esegue una giocata se è valida
+	 *
+	 * @param play (carta e giocatore che la gioca)
+	 * @return true se la carta è stata giocata, false altrimenti
+	 */
+	public boolean playCard(Play play){
+
+		if(!isValidPlay(play)){
+			return false;
+		}
+
+		Player player = play.getPlayer();
+		Card card = play.getCard();
+
+		//il giocatore gioca la carte e la aggiunge al trick
+		player.playCard(card);
+		currentTrick.addPlay(play);
+
+		//notifico la view
+		setChanged();
+		notifyObservers(new ModelEventMessage(ModelEvent.CARD_PLAYED,play));
+		
+		//avanza il turno
+		nextTurn();
+
+		return true;
+	}
+
+	/**
+	 * @return true if the round is over
+	 */
     @Override
     public boolean isRoundOver() {
         // La smazzata è finita quando un giocatore non ha più carte
         return players.stream().allMatch(player -> player.getHand().isEmpty());
     }
 
+	/**
+	 * @return true if the game is over
+	 */
     @Override
     public boolean isGameOver() {
         for (Team team : teams) {
             // La partita finisce quando una squadra raggiunge o supera i 21 punti
-            if (team.calculateTeamScore() >= 21) {
+            if (team.calculateTeamPoints() >= 21) {
                 return true;
             }
         }
         return false;
     }
     
-    // Altri metodi utili, come il calcolo del punteggio per la fine della smazzata
-    public void calculateRoundScores() {
+	/**
+	 * calcola i punti di un round
+	 * @param param the param
+	 * @param anotherParam the anotherParam
+	 * @return description of return value
+	 */
+    public void calculateRoundPoints() {
         for (Team team : teams) {
-            int teamScore = team.calculateTeamScore();
+            int teamScore = team.calculateTeamPoints();
             System.out.println("Punteggio " + team.getTeamName() + ": " + teamScore);
         }
     }
