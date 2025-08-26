@@ -40,7 +40,7 @@ public class UserProfile extends Observable{
 	public void setNickname(String nickname){
 		this.nickname = nickname;
 		setChanged();
-		notifyObservers(new ModelEventMessage(ModelEvent.PROFILE_CHANGED, this));
+		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.PROFILE_CHANGED, this));
 	}
 
 	/**
@@ -52,7 +52,7 @@ public class UserProfile extends Observable{
 	public void setAvatarPath(String avatarPath){
 		this.avatarPath = avatarPath;
 		setChanged();
-		notifyObservers(new ModelEventMessage(ModelEvent.PROFILE_CHANGED, this));
+		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.PROFILE_CHANGED, this));
 	}
 
 	/**
@@ -65,7 +65,7 @@ public class UserProfile extends Observable{
 		this.gamesPlayed++;
 		if(won){gamesWon++;}
 		setChanged();
-		notifyObservers(new ModelEventMessage(ModelEvent.PROFILE_CHANGED, this));
+		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.PROFILE_CHANGED, this));
 	
 	}
 

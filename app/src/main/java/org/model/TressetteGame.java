@@ -83,7 +83,7 @@ public class TressetteGame extends AbstractGame{
         
         // La View deve aggiornare lo stato di gioco dopo l'avvio della smazzata
         setChanged();
-        notifyObservers(new ModelEventMessage(ModelEvent.ROUND_STARTED,null));
+        notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.ROUND_STARTED,null));
     }
     
 	/**
@@ -99,7 +99,7 @@ public class TressetteGame extends AbstractGame{
             currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
 
             setChanged();
-            notifyObservers(new ModelEventMessage(ModelEvent.TURN_STARTED, currentPlayerIndex));
+            notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TURN_STARTED, currentPlayerIndex));
         } else {
             // La presa è finita, determina il vincitore
             endTrick();
@@ -120,7 +120,40 @@ public class TressetteGame extends AbstractGame{
 			this.currentPlayerIndex = winnerIndex;
 		}
 		setChanged();
-		notifyObservers(new ModelEventMessage(ModelEvent.TRICK_ENDED, null));
+		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TRICK_ENDED, winner));
+
+		if(isRoundOver()){
+			handleRoundEnd();
+		} else {
+			this.currentTrick = new Trick();
+		}
+	}
+
+	/**
+	 * gestisce la fine di un round
+	 * @return void
+	 */
+	private void handleRoundEnd(){
+
+		Team teamTooksLast = players.get(currentPlayerIndex).getTeam(); //dovrebbe essere il vincitore perché alla fine del trick 
+																 //viene comunque cambiato l'indice al vincitore della mano
+		for(Team team : teams){
+			if(teamTooksLast.equals(team)){ teamTooksLast.updateTotalScore(true);}
+			else{ teamTooksLast.updateTotalScore(false);}	
+		}
+
+		//notifico la view che il round sia finito
+		setChanged();
+		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.ROUND_ENDED,getTeams()));
+
+		//controllo se sa finita la partita forse potrei eliminare il controllo in endTrick()
+
+		if(isGameOver()){
+			setChanged();
+			notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.GAME_OVER, null));
+		} else {
+			startRound();
+		}
 	}
 
 	/**
@@ -172,7 +205,7 @@ public class TressetteGame extends AbstractGame{
 
 		//notifico la view
 		setChanged();
-		notifyObservers(new ModelEventMessage(ModelEvent.CARD_PLAYED,play));
+		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.CARD_PLAYED,play));
 		
 		//avanza il turno
 		nextTurn();
@@ -196,23 +229,11 @@ public class TressetteGame extends AbstractGame{
     public boolean isGameOver() {
         for (Team team : teams) {
             // La partita finisce quando una squadra raggiunge o supera i 21 punti
-            if (team.calculateTeamPoints() >= 21) {
+            if (team.getTeamPoints() >= 21) {
                 return true;
             }
         }
         return false;
     }
     
-	/**
-	 * calcola i punti di un round
-	 * @param param the param
-	 * @param anotherParam the anotherParam
-	 * @return description of return value
-	 */
-    public void calculateRoundPoints() {
-        for (Team team : teams) {
-            int teamScore = team.calculateTeamPoints();
-            System.out.println("Punteggio " + team.getTeamName() + ": " + teamScore);
-        }
-    }
 }

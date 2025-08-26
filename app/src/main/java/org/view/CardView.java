@@ -14,7 +14,7 @@ public class CardView extends JComponent {
     public CardView(Card card) {
         this.card = card;
         if (card != null) this.image = ImageCache.getImageForCard(card);
-        setPreferredSize(new Dimension(60, 90));
+        setPreferredSize(new Dimension(120, 180));
     }
 
     public void setCard(Card card) {

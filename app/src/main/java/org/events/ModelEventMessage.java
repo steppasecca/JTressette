@@ -11,7 +11,7 @@ public class ModelEventMessage {
 	}
 
 	//metodi getters
-	
+
 	public ModelEvent getEvent(){ return event;}
 	public Object getPayload(){ return payload;}
 
@@ -20,5 +20,23 @@ public class ModelEventMessage {
 	public String toString(){
 		return "ModelEventMessage:{" + event + ",payload = " + payload + "}";
 
+	}
+	/**
+	 * tipi di evento emessi dal model
+	 */
+
+	public enum ModelEvent{
+		CARDS_DEALT,
+		CARD_PLAYED,
+		TURN_STARTED,
+		TRICK_STARTED,
+		TRICK_ENDED,
+		ROUND_STARTED,
+		ROUND_ENDED,
+		GAME_STARTED,
+		GAME_OVER,
+		PROFILE_CHANGED,
+		PLAYER_JOINED,
+		PLAYER_LEFT,
 	}
 }

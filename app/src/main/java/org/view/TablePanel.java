@@ -21,7 +21,7 @@ public class TablePanel extends JPanel {
 		}
 		this.slotCount = players.size();
 		setLayout(null);
-		setBackground(new Color(34,120,60));
+		setBackground(new Color(20,80,55));
 		initSlots(players);
 	}
 	 
@@ -47,7 +47,7 @@ public class TablePanel extends JPanel {
 			});
 			return;
 		}
-		int slotW = 140, slotH = 80;
+		int slotW = 140, slotH = 220;
 		if (slotCount == 2){
             // giocatore 0 in alto, giocatore 1 in basso
             slots.get(0).setBounds((w - slotW)/2, 10, slotW, slotH);

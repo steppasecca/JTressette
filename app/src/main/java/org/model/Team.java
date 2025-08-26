@@ -2,6 +2,7 @@ package org.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 /**
  * classe che rappresenta una squadra
  *
@@ -13,13 +14,13 @@ public class Team{
 	private String teamName;
 	private List<Player> players; //lista giocatrici nella squadra
 	private CapturedCards capturedCards; //lista delle "prese"
-	private int roundPoints;  //punti della squadra
+	private int totalPoints; // punti della squadra
 
 	public Team(String teamName){
 		this.teamName = teamName;
 		this.capturedCards = new CapturedCards();
 		this.players = new ArrayList<>();
-		this.roundPoints = 0;
+		this.totalPoints = 0;
 	}
 	/**
 	 *getter per il nome della squadra
@@ -50,7 +51,7 @@ public class Team{
 	 * @return roundPoints
 	 */
 	public int getTeamPoints(){
-		return this.roundPoints;
+		return this.totalPoints;
 	}
 
 
@@ -75,24 +76,40 @@ public class Team{
 		this.capturedCards.addTrickCards(trick);
 	}
 
-	/**
-	 * @param roundPoints
-	 * @return void
-	 */
-	public void addRoudPoints(int roundPoints){
-		this.roundPoints+=roundPoints;
-	}
 
 	/**
 	 * metodo che calcola il punteggio delle carte prese
 	 * @return score
 	 */
-	public int calculateTeamPoints(){
+	public int calculateCapturedPoints(){
 		return this.capturedCards.calculatePoints();
+	}
+
+	/**
+	 * metodo che aggiorna il punteggio totale alla fine di un round
+	 *
+	 * @param bonusPoint boolean
+	 * @return void
+	 */
+	public void updateTotalScore(boolean bonusPoint){
+		this.totalPoints += calculateCapturedPoints();
+		if(bonusPoint){this.totalPoints++;}
+		resetCapturedCards();
 	}
 	
 	public void resetCapturedCards() {
 		this.capturedCards = new CapturedCards();
 	}
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		Team team = (Team) o;
+		return Objects.equals(teamName, team.teamName);
+	}
 
+	@Override
+	public int hashCode() {
+		return Objects.hash(teamName);
+	}
 }

@@ -45,7 +45,7 @@ public abstract class AbstractGame extends Observable{
 			}
 		}
 		setChanged();
-		notifyObservers(new ModelEventMessage(ModelEvent.CARDS_DEALT,null));
+		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.CARDS_DEALT,null));
 	}
 	
     /**

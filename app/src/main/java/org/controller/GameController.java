@@ -19,7 +19,7 @@ public class GameController implements Observer {
     private final TressetteGame game;
     private final GamePanel view;
     private final Navigator navigator;
-    private final Player humanPlayer; // il player controllato dall'utente (assunto uno solo)
+    private final Player humanPlayer; // il player controllato dall'utente 
 
     public GameController(TressetteGame game, GamePanel view, Navigator navigator, Player humanPlayer) {
         this.game = game;
@@ -34,7 +34,7 @@ public class GameController implements Observer {
         // Register as observer 
         this.game.addObserver(this);
 
-        // Set view callback
+        // listener per il click sulla carta che invoca handleHumanPlay
         this.view.setCardClickListener(card -> handleHumanPlay(card));
 
         // inizializza view con stato corrente
@@ -53,31 +53,39 @@ public class GameController implements Observer {
                 ModelEventMessage msg = (ModelEventMessage) arg;
                 switch (msg.getEvent()) {
                     case CARDS_DEALT:
-                        // nuove mani: rinfresca completamente
                         refreshView();
+						//aggiungere effetto tipo carte distribuite evviva
                         break;
 					case CARD_PLAYED:
+						Play play =(Play) msg.getPayload();
+						view.appendLog("Il giocatore " + play.getPlayer().getNome() 
+								+ " ha giocato il " + play.getCard().toString());
 						refreshView();
                     case TURN_STARTED:
-                        Integer idx = (Integer) msg.getPayload();
-                        if (idx != null) view.setCurrentPlayer(idx);
+						refreshView();
+						triggerNextAiIfNeeded();
                         break;
                     case TRICK_ENDED:
-                        TrickResult tr = (TrickResult) msg.getPayload();
-                        if (tr != null) {
-                            // mostra la carta vincente e rinfresca (punteggi, mani ecc.)
-                            view.showPlayedCard(tr.getWinnerIndex(), tr.getWinningCard());
-                        }
+						Player winnerOfTheTrick = (Player)msg.getPayload();
+						view.appendLog("Ha preso questa mano: "+ winnerOfTheTrick.getNome() 
+								+"della squadra: "  + winnerOfTheTrick.getTeam().getTeamName());
                         refreshView();
                         break;
+					case ROUND_STARTED:
+						refreshView();
+						break;
+					case ROUND_ENDED:
+						List<Team> teams = (List<Team>) msg.getPayload();
+						view.updateScores(teams); 
+						JOptionPane.showMessageDialog(view, "Fine della round! Si procede al prossimo.");
+						refreshView();
+						break;
                     case PROFILE_CHANGED:
-                        // payload è UserProfile; se vuoi aggiornare header/menu gestiscilo qui
                         break;
                     case GAME_OVER:
                         handleGameOver();
                         break;
                     default:
-                        // altri eventi: refresh per sicurezza
                         refreshView();
                         break;
                 }
@@ -85,9 +93,6 @@ public class GameController implements Observer {
                 // backward compatibility (non dovresti arrivare qui dopo il refactor)
                 refreshView();
             }
-
-            // dopo ogni aggiornamento prova ad avviare IA se serve
-            triggerNextAiIfNeeded();
         });
     }
 
@@ -106,9 +111,6 @@ public class GameController implements Observer {
         Trick trick = game.getCurrentTrick();
         List<Play> plays = trick.getPlays();
         view.updateTable(plays, game.getPlayers());
-
-        // aggiorna punteggi
-        view.updateScores(game.getTeams());
 
         // indica il giocatore corrente tramite indice
         view.setCurrentPlayer(game.getCurrentPlayerIndex());
@@ -134,7 +136,7 @@ public class GameController implements Observer {
             new SwingWorker<org.model.Card, Void>() {
                 @Override
                 protected org.model.Card doInBackground() throws Exception {
-                    Thread.sleep(150); // breve pausa per UX
+                    Thread.sleep(250); // breve pausa per dare un senso realistico
                     return ((ArtificialPlayer) current).chooseCardToPlay(game.getCurrentTrick());
                 }
 
