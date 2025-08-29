@@ -112,20 +112,23 @@ public class TressetteGame extends AbstractGame{
 	private void endTrick() {
 		Player winner = currentTrick.getWinningPlayer();
 		int winnerIndex = -1;
-		Card winningCard = currentTrick.getWinningCard();
 
+		//salvo le giocate prima di pulire il trick
+		List<Play> plays = currentTrick.getPlays();
 		if (winner != null) {
 			winner.getTeam().addTrick(currentTrick);
 			winnerIndex = players.indexOf(winner);
 			this.currentPlayerIndex = winnerIndex;
 		}
+		Object[] payload = new Object[]{winner, plays};
 		setChanged();
-		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TRICK_ENDED, winner));
+		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TRICK_ENDED, payload));
 
 		if(isRoundOver()){
 			handleRoundEnd();
 		} else {
 			this.currentTrick = new Trick();
+			notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TURN_STARTED,currentPlayerIndex));
 		}
 	}
 

@@ -79,9 +79,6 @@ public class MainController {
 		GamePanel gamePanel = new GamePanel();
 		navigator.addScreen(Navigator.Screen.GAME, gamePanel);
 
-		// crea TablePanel e impostalo nella view PRIMA di creare il controller
-		TablePanel tp = new TablePanel(game.getPlayers());
-		gamePanel.setTablePanel(tp);		
 		// crea controller che collegherà modello e view
 		new GameController(game, gamePanel, navigator, human);
 

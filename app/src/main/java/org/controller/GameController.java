@@ -1,3 +1,4 @@
+
 package org.controller;
 
 import org.model.*;
@@ -54,37 +55,95 @@ public class GameController implements Observer {
                 switch (msg.getEvent()) {
                     case CARDS_DEALT:
                         refreshView();
-						//aggiungere effetto tipo carte distribuite evviva
                         break;
-					case CARD_PLAYED:
-						Play play =(Play) msg.getPayload();
-						view.appendLog("Il giocatore " + play.getPlayer().getNome() 
-								+ " ha giocato il " + play.getCard().toString());
-						refreshView();
-                    case TURN_STARTED:
-						refreshView();
-						triggerNextAiIfNeeded();
-                        break;
-                    case TRICK_ENDED:
-						Player winnerOfTheTrick = (Player)msg.getPayload();
-						view.appendLog("Ha preso questa mano: "+ winnerOfTheTrick.getNome() 
-								+"della squadra: "  + winnerOfTheTrick.getTeam().getTeamName());
+
+                    case CARD_PLAYED: {
+                        Play play = (Play) msg.getPayload();
+                        view.appendLog("Il giocatore " + play.getPlayer().getNome() 
+                                + " ha giocato il " + play.getCard().toString());
                         refreshView();
                         break;
-					case ROUND_STARTED:
-						refreshView();
-						break;
-					case ROUND_ENDED:
-						List<Team> teams = (List<Team>) msg.getPayload();
-						view.updateScores(teams); 
-						JOptionPane.showMessageDialog(view, "Fine della round! Si procede al prossimo.");
-						refreshView();
-						break;
+                    }
+
+                    case TURN_STARTED: {
+                        // il payload dovrebbe essere l'indice del giocatore corrente (Integer) oppure null (fallback)
+                        Object p = msg.getPayload();
+                        if (p instanceof Integer) {
+                            int idx = (Integer) p;
+                            view.setCurrentPlayer(idx);
+                            view.appendLog("TURN_STARTED payload indice: " + idx 
+                                + " (" + game.getPlayers().get(idx).getNome() + ")");
+                        } else {
+                            // fallback: usa lo stato del model
+                            view.appendLog("TURN_STARTED (no payload) currentIndex=" + game.getCurrentPlayerIndex());
+                            view.setCurrentPlayer(game.getCurrentPlayerIndex());
+                        }
+                        refreshView();
+                        triggerNextAiIfNeeded();
+                        break;
+                    }
+
+                    case TRICK_ENDED: {
+                        Object payload = msg.getPayload();
+                        Player winner = null;
+                        List<Play> playsForView = Collections.emptyList();
+
+                        // gestisce il nuovo payload Object[] {winner, playsSnapshot}
+                        if (payload instanceof Object[]) {
+                            Object[] arr = (Object[]) payload;
+                            if (arr.length >= 1 && arr[0] instanceof Player) {
+                                winner = (Player) arr[0];
+                            }
+                            if (arr.length >= 2 && arr[1] instanceof List) {
+                                playsForView = (List<Play>) arr[1];
+                            }
+                        } else if (payload instanceof Player) { //else if di sicurezza se si torna un payload con solo i player
+                            winner = (Player) payload;
+                        }
+
+                        if (winner != null) {
+                            view.appendLog("Ha preso questa mano: " + winner.getNome() 
+                                + " della squadra: " + winner.getTeam().getTeamName());
+                        } else {
+                            view.appendLog("Ha preso questa mano: (nessun winner nel payload)");
+                        }
+
+                        // mostra subito le carte della mano (snapshot)
+                        view.updateTable(playsForView, game.getPlayers());
+
+                        // tienile a video per 1 secondo, poi pulisci e lascia partire il nuovo turno
+                        new javax.swing.Timer(2000, e -> {
+                            ((javax.swing.Timer) e.getSource()).stop();
+                            view.updateTable(Collections.emptyList(), game.getPlayers());
+                            refreshView();
+                            // dopo la pulizia triggeriamo l'IA se tocca a lei
+                            triggerNextAiIfNeeded();
+                        }) {{
+                            setRepeats(false);
+                            start();
+                        }};
+                        break;
+                    }
+
+                    case ROUND_STARTED:
+                        refreshView();
+                        break;
+
+                    case ROUND_ENDED: {
+                        List<Team> teams = (List<Team>) msg.getPayload();
+                        view.updateScores(teams); 
+                        JOptionPane.showMessageDialog(view, "Fine della round! Si procede al prossimo.");
+                        refreshView();
+                        break;
+                    }
+
                     case PROFILE_CHANGED:
                         break;
+
                     case GAME_OVER:
                         handleGameOver();
                         break;
+
                     default:
                         refreshView();
                         break;
@@ -97,8 +156,8 @@ public class GameController implements Observer {
     }
 
     /** 
-	 * Aggiorna la view leggendo lo stato dal model 
-	 */
+     * Aggiorna la view leggendo lo stato dal model 
+     */
     private void refreshView() {
         // aggiorna mano umana
         if (humanPlayer.getHand() != null) {
@@ -118,11 +177,11 @@ public class GameController implements Observer {
 
     private synchronized void handleHumanPlay(org.model.Card card) {
         // verifica che sia il turno del giocatore umano
-		Play play = new Play(humanPlayer,card);
+        Play play = new Play(humanPlayer, card);
 
-		if(!game.playCard(play)){
-			view.appendLog("Giocata non valida");
-		}
+        if(!game.playCard(play)){
+            view.appendLog("Giocata non valida");
+        }
     }
 
     /**
@@ -131,7 +190,13 @@ public class GameController implements Observer {
     private void triggerNextAiIfNeeded() {
         if (game.isRoundOver() || game.isGameOver()) return;
 
-        Player current = game.getPlayers().get(game.getCurrentPlayerIndex());
+        int idx = game.getCurrentPlayerIndex();
+        Player current = game.getPlayers().get(idx);
+
+        // debug log: utile per capire perché l'IA non parte
+        view.appendLog("[DEBUG] triggerNextAiIfNeeded: currentIndex=" + idx + ", player=" 
+            + current.getNome() + " (" + current.getClass().getSimpleName() + ")");
+
         if (current instanceof ArtificialPlayer) {
             new SwingWorker<org.model.Card, Void>() {
                 @Override
@@ -143,13 +208,22 @@ public class GameController implements Observer {
                 @Override
                 protected void done() {
                     try {
-						Card card = get();
-						if(card!=null){
-							Play play = new Play(current, card);
-							if (!game.playCard(play)) {
-								view.appendLog("IA ha tentato una giocata non valida!");
-							}
-						}
+                        Card card = get();
+                        if (card != null) {
+                            // controllo per evitare che tenti di giocare anche quando non è il suo turno
+                            if (game.getPlayers().get(game.getCurrentPlayerIndex()) != current) {
+                                view.appendLog("[DEBUG] IA scelta scartata: non è più il turno (index changed).");
+                                return;
+                            }
+                            Play play = new Play(current, card);
+                            if (!game.playCard(play)) {
+                                view.appendLog("IA ha tentato una giocata non valida!");
+                            } else {
+                                view.appendLog("[DEBUG] IA ha giocato: " + card);
+                            }
+                        } else {
+                            view.appendLog("[DEBUG] IA non ha trovato carta da giocare (chooseCardToPlay returned null).");
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -165,3 +239,4 @@ public class GameController implements Observer {
         });
     }
 }
+
