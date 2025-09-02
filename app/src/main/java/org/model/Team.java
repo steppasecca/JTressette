@@ -78,22 +78,22 @@ public class Team{
 
 
 	/**
-	 * metodo che calcola il punteggio delle carte prese
+	 * metodo privato di utilità che calcola il punteggio delle carte prese
 	 * @return score
 	 */
-	public int calculateCapturedPoints(){
+	private int calculateCapturedPoints(){
 		return this.capturedCards.calculatePoints();
 	}
 
 	/**
 	 * metodo che aggiorna il punteggio totale alla fine di un round
-	 *
 	 * @param bonusPoint boolean
 	 * @return void
 	 */
 	public void updateTotalScore(boolean bonusPoint){
-		this.totalPoints += calculateCapturedPoints();
-		if(bonusPoint){this.totalPoints++;}
+		int terzi = calculateCapturedPoints();
+		int roundPoints = (int)(terzi/3.0f);
+		this.totalPoints += roundPoints + (bonusPoint ? 1 : 0);
 		resetCapturedCards();
 	}
 	

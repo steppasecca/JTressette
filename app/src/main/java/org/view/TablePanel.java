@@ -7,9 +7,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 /**
- * TablePanel pannello parametrico che dispone gli slots per i giocatori/giocatrici
+ * componente grafico che rappresenta il tavolo da gioco
  */
-
 public class TablePanel extends JPanel {
 
 	private final List<PlayerSlot> slots = new ArrayList<>();
@@ -25,6 +24,12 @@ public class TablePanel extends JPanel {
 		initSlots(players);
 	}
 	 
+	/**
+	 * metodo privato di utilità per inizializzare e aggiungere i playerSlot
+	 *
+	 * @param players
+	 * @return void
+	 */
 	private void initSlots(List<Player> players){
 		for(int i = 0;i<players.size();i++){
 			PlayerSlot ps = new PlayerSlot(players.get(i));
@@ -39,6 +44,8 @@ public class TablePanel extends JPanel {
 		int h = getHeight();
 
 		if(w==0 || h==0){
+			//se le dimensioni sono 0 aggiungo un listener per controllare se il pannello 
+			//viene ridimensionato nel qual caso viene richiamato doLayoutSlots()
 			addComponentListener(new java.awt.event.ComponentAdapter() {
 				@Override
 				public void componentResized(java.awt.event.ComponentEvent e) {
@@ -49,11 +56,12 @@ public class TablePanel extends JPanel {
 		}
 		int slotW = 140, slotH = 220;
 		if (slotCount == 2){
-            // giocatore 0 in alto, giocatore 1 in basso
+			// se sono due giocatori uno al centro in alto e uno al centro in basso
             slots.get(0).setBounds((w - slotW)/2, 10, slotW, slotH);
             slots.get(1).setBounds((w - slotW)/2, h - slotH - 10, slotW, slotH);
         } else {
-            // 4 giocatori: 0=north, 1=east, 2=south, 3=west
+            // nel caso siano quattro uno centrale in alto e uno in basso 
+			// poi uno centrale a destra e uno a sinistra
             slots.get(0).setBounds((w - slotW)/2, 10, slotW, slotH);
             slots.get(2).setBounds((w - slotW)/2, h - slotH - 10, slotW, slotH);
             slots.get(1).setBounds(w - slotW - 10, (h - slotH)/2, slotW, slotH);
@@ -61,31 +69,41 @@ public class TablePanel extends JPanel {
         }
     }
 
+	/**
+	 * ricalcola il layout
+	 */
     @Override
     public void invalidate() {
         super.invalidate();
         // dopo resize ricalcola posizioni
+		// invokeLater per evitare concorrenza
         SwingUtilities.invokeLater(this::doLayoutSlots);
     }
 
-    // API pubblica usata dalla GamePanel/controller
+	/**
+	 * metodo che permette al controller di comunicare il giocatore corrente
+	 *
+	 * @param playerIndex indice del giocatore da evidenziare
+	 * @return void
+	 */
     public void setCurrentPlayer(int playerIndex) {
         for (int i = 0; i < slots.size(); i++) {
             slots.get(i).setHighlighted(i == playerIndex);
         }
     }
 
+	/**
+	 * metodo che permette al controller di settar l'ultima carta giocata da un giocatore
+	 *
+	 * @param playerIndex int
+	 * @param card Card
+	 * @return void
+	 */
     public void showPlayedCard(int playerIndex, Card card) {
-        // mostra la carta al centro (potresti animarla)
         if (playerIndex < 0 || playerIndex >= slots.size()) return;
-        // mostra nell'area della slot la carta come ultima giocata
         slots.get(playerIndex).setLastPlayedCard(card);
         // opzionale: repaint centrale per animazione
         repaint();
     }
 
-    public void updateHandCount(int playerIndex, int count) {
-        if (playerIndex < 0 || playerIndex >= slots.size()) return;
-        slots.get(playerIndex).setCardCount(count);
-    }
 }

@@ -24,29 +24,12 @@ public abstract class AbstractGame extends Observable{
     }
 
 	/**
-	 * metodo per distribuire le carte ai giocatori
+	 * metodo astratto per distribuire le carte 
 	 *
 	 * @return void
 	 */
 
-	protected void dealCards() { 
-		int cardsPerPlayer = 10;
-		for(int i = 0;i<cardsPerPlayer;i++){
-			for(Player player : players){
-				if(deck.isEmpty()){
-					throw new IllegalStateException("errore ho cercato di distribuire carte da un mazzo vuoto");
-				}
-				else{
-					if(player.getHand() == null){
-						player.setHand(new Hand());
-					}
-					player.getHand().addCard(deck.drawCard());
-				}
-			}
-		}
-		setChanged();
-		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.CARDS_DEALT,null));
-	}
+	protected abstract void dealCards(); 
 	
     /**
      * Metodo astratto per gestire la logica di un singolo turno.

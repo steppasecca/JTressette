@@ -8,25 +8,49 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Cache semplice per le immagini delle carte (carica da /cards/<filename>).
+ * classe di utilità semplice per caricare una sola volta le immagini delle carte
+ * (carica da /cards/<filename>).
  */
 public final class ImageCache {
+
+	//ConcurrentHashMap per evitare problemi di concorrenza
     private static final Map<String, BufferedImage> CACHE = new ConcurrentHashMap<>();
+
 
     private ImageCache() {}
 
+	/**
+	 * ritorna l'immagine e la aggiunge alla cache
+	 *
+	 * @param filename 
+	 * @return BufferdImage
+	 */
     public static BufferedImage getImage(String filename) {
         if (filename == null) return null;
+		//se non è nella cache carichiamo l'immagine e l'aggiungiamo
         return CACHE.computeIfAbsent(filename, ImageCache::loadImageFromResources);
     }
 
+	/**
+	 *  ritorna l'immagine e la salva nella cache
+	 *
+	 * @param Card card
+	 * @return image BuffedImage
+	 */
     public static BufferedImage getImageForCard(org.model.Card card) {
         if (card == null) return null;
         String fname = CardImageMapper.filenameFor(card);
         return getImage(fname);
     }
 
+	/**
+	 * metodo ausiliario che concretamente carica l'immagine
+	 *
+	 * @param filename
+	 * @return image BufferedImage
+	 */
     private static BufferedImage loadImageFromResources(String filename) {
+		//path relativo a JTressette/app/src/main/resources
         String path = "/images/cards/" + filename;
         try (InputStream is = ImageCache.class.getResourceAsStream(path)) {
             if (is == null) {

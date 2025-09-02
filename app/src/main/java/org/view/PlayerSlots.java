@@ -12,7 +12,6 @@ import java.awt.*;
 class PlayerSlot extends JPanel {
     private final Player player;
     private JLabel nameLabel;
-    private JLabel cardCountLabel;
     private CardView lastCardView;
     private boolean highlighted = false;
 
@@ -21,30 +20,40 @@ class PlayerSlot extends JPanel {
         init();
     }
 
+	/**
+	 * metodo privato di utilità che inizializza i componenti grafici
+	 */
     private void init() {
         setLayout(new BorderLayout(4,4));
         nameLabel = new JLabel(player.getNome(), SwingConstants.CENTER);
 		int count = (player.getHand() != null) ? player.getHand().getSizeOfCardSet() : 0;
-		cardCountLabel = new JLabel("♠ " + count, SwingConstants.CENTER);
         lastCardView = new CardView(null);
 
         add(nameLabel, BorderLayout.NORTH);
         add(lastCardView, BorderLayout.CENTER);
-        add(cardCountLabel, BorderLayout.SOUTH);
 
         setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 2));
     }
 
-    public void setCardCount(int c) {
-        cardCountLabel.setText("♠ " + c);
-    }
 
+	/**
+	 * setter per lastCardView
+	 * @param card
+	 * @return void
+	 */
     public void setLastPlayedCard(Card card) {
         lastCardView.setCard(card);
         revalidate();
         repaint();
     }
 
+	/**
+	 * evidenzia e de-evidenzia il bordo dello slot dello slot
+	 *
+	 * @param param the param
+	 * @param anotherParam the anotherParam
+	 * @return description of return value
+	 */
     public void setHighlighted(boolean h) {
         this.highlighted = h;
         setBorder(BorderFactory.createLineBorder(h ? Color.YELLOW : Color.DARK_GRAY, h ? 3 : 2));

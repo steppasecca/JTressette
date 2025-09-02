@@ -9,7 +9,12 @@ import java.util.List;
  */
 
 public interface GameModeStrategy {
-
 	int getPlayersPerTeam();
+
+	int getCardsPerPlayer();
+
+	void dealInitialCards(List<Player> players,Deck deck);
+
+	void handlePostTrickDraw(Deck deck,List<Player> players,Player trickWinner); 
 	
-}
+	}

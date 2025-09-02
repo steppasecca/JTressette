@@ -31,8 +31,8 @@ public class Card implements Comparable<Card>{
 		return this.rank;
 	}
 
-	public double getGameValue(){
-		return rank.getTressetteValue()/3;
+	public int getGameValue(){
+		return rank.getTressetteValue();
 	}
 	public int getCaptureOrder(){
 		return rank.getCaptureOrder();

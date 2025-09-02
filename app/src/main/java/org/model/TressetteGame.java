@@ -61,6 +61,14 @@ public class TressetteGame extends AbstractGame{
 
 	}
 
+	@Override
+	protected void dealCards(){
+		gameMode.dealInitialCards(players, deck);
+		setChanged();
+		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.CARDS_DEALT,null));
+	}
+
+
     /**
      * Avvia una nuova partita: mischia il mazzo e distribuisce le carte.
      */
@@ -124,6 +132,23 @@ public class TressetteGame extends AbstractGame{
 		setChanged();
 		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TRICK_ENDED, payload));
 
+		//se ci sono carte si pesca ancora in base alla mode
+		if (winner != null) {
+			javax.swing.Timer timer = new javax.swing.Timer(500, e -> {
+				gameMode.handlePostTrickDraw(deck, players, winner);
+				if(gameMode instanceof TwoPlayerStrategy){
+					for(Player player : players){
+						if (player instanceof HumanPlayer){
+							player.getHand().sort();
+						}
+					}
+				}
+			
+			});
+			timer.setRepeats(false);
+			timer.start();
+		}
+
 		if(isRoundOver()){
 			handleRoundEnd();
 		} else {
@@ -141,8 +166,8 @@ public class TressetteGame extends AbstractGame{
 		Team teamTooksLast = players.get(currentPlayerIndex).getTeam(); //dovrebbe essere il vincitore perché alla fine del trick 
 																 //viene comunque cambiato l'indice al vincitore della mano
 		for(Team team : teams){
-			if(teamTooksLast.equals(team)){ teamTooksLast.updateTotalScore(true);}
-			else{ teamTooksLast.updateTotalScore(false);}	
+			if(teamTooksLast.equals(team)){ team.updateTotalScore(true);}
+			else{ team.updateTotalScore(false);}	
 		}
 
 		//notifico la view che il round sia finito

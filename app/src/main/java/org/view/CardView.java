@@ -17,6 +17,12 @@ public class CardView extends JComponent {
         setPreferredSize(new Dimension(120, 180));
     }
 
+	/**
+	 * setter per la carta card
+	 *
+	 * @param card 
+	 * @return void
+	 */
     public void setCard(Card card) {
         this.card = card;
         this.image = (card == null) ? null : ImageCache.getImageForCard(card);
@@ -27,16 +33,18 @@ public class CardView extends JComponent {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
+		//otteniamo le dimensioni del componente
         int w = getWidth();
         int h = getHeight();
+		//create() per evitare conflitti con altre componenti grafiche
         Graphics2D g2 = (Graphics2D) g.create();
         try {
-            // anti-aliasing / quality hints
+            // anti-aliasing/quality hints per migliorare la nitidezza
             g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
             g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 
             if (image != null) {
-                // scale preserving aspect ratio
+			//se c'è un'immagine la ridimensiona e la centra
                 int iw = image.getWidth();
                 int ih = image.getHeight();
                 double scale = Math.min((double) w / iw, (double) h / ih);
@@ -46,7 +54,7 @@ public class CardView extends JComponent {
                 int dy = (h - dh) / 2;
                 g2.drawImage(image, dx, dy, dw, dh, null);
             } else {
-                // placeholder: rectangle + text
+				//se non c'è un'immagine viene creato un semplice posto dove scrivere il nome
                 g2.setColor(new Color(220,220,220));
                 g2.fillRoundRect(0,0,w-1,h-1,8,8);
                 g2.setColor(Color.DARK_GRAY);
@@ -57,6 +65,7 @@ public class CardView extends JComponent {
                 g2.drawString(txt, Math.max(4, (w-tw)/2), h/2);
             }
         } finally {
+			//dispose per il rilascio delle risorse
             g2.dispose();
         }
     }

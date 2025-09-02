@@ -9,16 +9,14 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * view principale par la mano del tressette
+ * componente grafico principale per il gioco
  */
-
 public class GamePanel extends JPanel {
 
 	private final JPanel scorePanel = new JPanel(new GridLayout(0,1));
 	private TablePanel tablePanelComponent;
 	private final JPanel handPanel = new JPanel(new FlowLayout(FlowLayout.CENTER,5,5));
 	private final JTextArea logArea = new JTextArea(8,20);
-	private final JButton passButton = new JButton("passa il turno (debug)");
 
 	private Consumer<Card> cardClickListener = c -> {};
 
@@ -28,6 +26,11 @@ public class GamePanel extends JPanel {
 		initGP();
 	}
 
+	/**
+	 * metodo privato di utilità che inizializza e configura tutti i componenti e "sotto-pannelli"
+	 *
+	 * @return void
+	 */
 	private void initGP() {
 
 		//in alto la scoreBoard
@@ -44,11 +47,10 @@ public class GamePanel extends JPanel {
 		bottomTop.add(new JScrollPane(handPanel),BorderLayout.CENTER);
 
 		JPanel controls = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-		controls.add(passButton);
 		bottom.add(bottomTop,BorderLayout.CENTER);
 		bottom.add(controls, BorderLayout.SOUTH);
 
-		// East: log
+		// a destra l'area di log
 		JPanel east = new JPanel(new BorderLayout());
 		east.add(new JLabel("Log"), BorderLayout.NORTH);
 		logArea.setEditable(false);
@@ -58,17 +60,21 @@ public class GamePanel extends JPanel {
 		add(bottom, BorderLayout.SOUTH);
 		add(east, BorderLayout.EAST);
 
-		// default handlers
-		passButton.addActionListener(e -> appendLog("Utente ha premuto Passa (debug)"));
 	}
 
+	/**
+	 * litstener per le carte nella mano
+	 *
+	 * @param listener
+	 * @return void
+	 */
 	public void setCardClickListener(Consumer<Card> listener){
 		this.cardClickListener = listener;
 	}
 
 	/**
 	 * Aggiorna la visuale della mano umana.
-	 * Deve essere chiamato sull'EDT; il controller fa SwingUtilities.invokeLater se necessario.
+	 * @param cards
 	 */
 	public void updateHand(List<org.model.Card> cards) {
 		handPanel.removeAll();
@@ -81,7 +87,7 @@ public class GamePanel extends JPanel {
 				Image scaled = img.getScaledInstance(thumbW, thumbH, Image.SCALE_SMOOTH);
 				b = new JButton(new ImageIcon(scaled));
 			} else {
-				b = new JButton(cardToString(c));
+				b = new JButton(c.toString());
 			}
 			b.setFocusPainted(false);
 			b.setBorder(BorderFactory.createEmptyBorder());
@@ -105,6 +111,12 @@ public class GamePanel extends JPanel {
 		scorePanel.repaint();
 	}
 
+	/**
+	 * 
+	 * setter per il tablePanel(forse si può eliminare)
+	 * @param tp tablePanel
+	 * @return void
+	 */
 	public void setTablePanel(TablePanel tp) {
 		if (tablePanelComponent != null) remove(tablePanelComponent);
 		tablePanelComponent = tp;
@@ -112,7 +124,14 @@ public class GamePanel extends JPanel {
 		revalidate();
 		repaint();
 	}
-	// nuovo metodo per aggiornare la tabella con le giocate attuali
+
+	/**
+	 * chiama i metodi di TablePanel per aggiornare le carte giocate
+	 *
+	 * @param plays
+	 * @param players
+	 * @return void
+	 */
 	public void updateTable(List<Play> plays, List<Player> players) {
 		if (tablePanelComponent == null) return;
 
@@ -134,7 +153,13 @@ public class GamePanel extends JPanel {
 		}
 	}
 
-	// delega per mostrare la carta vincente (usato da GameController)
+	/**
+	 * chiama il metodo di TablePanel per mostrare la carta giocata
+	 *
+	 * @param playerIndex
+	 * @param card
+	 * @return void
+	 */
 	public void showPlayedCard(int playerIndex, org.model.Card card) {
 		if (tablePanelComponent != null) {
 			tablePanelComponent.showPlayedCard(playerIndex, card);
@@ -142,7 +167,13 @@ public class GamePanel extends JPanel {
 			appendLog("tablePanel non inizializzato");
 		}
 	}
-	// aggiornamento del giocatore corrente chiamato dal controller osservatore:
+
+	/**
+	 * chiama il matodo di TablePanel per evidenziare il giocatore corrente
+	 *
+	 * @param playerIndex
+	 * @return void
+	 */
 	public void setCurrentPlayer(int playerIndex) {
 		if (tablePanelComponent != null) {
 			tablePanelComponent.setCurrentPlayer(playerIndex);
@@ -151,18 +182,21 @@ public class GamePanel extends JPanel {
 		}
 	}
 
+	/**
+	 * metodo utile per il debug
+	 */
 	public void setCurrentPlayer(String playerName) {
 		appendLog("Turno corrente: " + playerName);
 	}
 
+	/**
+	 * metodo per aggiungere messaggi al logPanel (debug)
+	 */
 	public void appendLog(String msg) {
 		logArea.append(msg + "\n");
 		logArea.setCaretPosition(logArea.getDocument().getLength());
 	}
 
-	private String cardToString(org.model.Card c) {
-		return c.getRank().name() + " di " + c.getSuit().name();
-	}
 }
 
 

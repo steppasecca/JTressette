@@ -5,7 +5,7 @@ import org.model.Card.Rank;
 import org.model.Card.Suit;
 
 /**
- * Mappa una Card al relativo filename (es. asso_di_spade.jpg).
+ * classe di utilità che mappa una Card al relativo filename (es. asso_di_spade.jpg).
  */
 public final class CardImageMapper {
 
