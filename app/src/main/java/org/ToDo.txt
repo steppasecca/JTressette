@@ -1,0 +1,26 @@
+PRIORITY
+-- risolvere bug per la quale dal secondo round vengono distribuite 11 carte nella modalità a due gioccatori
+
+-- migliorare la grafica del menu del profilo nel pannello principale
+
+-- implementare un ritardo quando si finisce il round per fare in modo di vedere l'ultima carta
+	giocata dal giocatore artificiale
+-- migliorare la visualizzazione della fine del round e della partita
+
+-- aggiunstare la scelta dell'avatar e la sua visualizzazione
+
+--implementare la musica e l'audio
+
+-- aggiungere degli effetti speciali
+
+-- aggiustare la visualizzazione delle informazioni nel tablepanel come i componenti della squadra, l'avatar e boh
+
+MIGLIORIE:
+
+-- valutare la possibilità  di aggiungere le modalità:
+		1.col morto(forse complesso perchè cambia la view del tablepanel
+		2. in due con 13 e la visualizzazione della carta distribuita ad ogni turno
+
+-- implementare un bottone pausa che esponga un semplice menu con le opzioni 1.torna al menu principale
+	2.resume
+	3.?
