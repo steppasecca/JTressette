@@ -1,4 +1,4 @@
-package org.events;
+package org.util;
 
 public class ModelEventMessage {
 
