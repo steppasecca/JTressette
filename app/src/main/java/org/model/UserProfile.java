@@ -3,7 +3,7 @@ package org.model;
 import java.io.*;
 import java.util.Properties;
 
-import org.events.*;
+import org.util.*;
 import java.util.Observable;
 
 /**

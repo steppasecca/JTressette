@@ -2,7 +2,7 @@
 package org.controller;
 
 import org.model.*;
-import org.events.*;
+import org.util.*;
 import org.view.GamePanel;
 import org.view.TablePanel;
 

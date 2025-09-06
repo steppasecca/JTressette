@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 
-import org.events.*;
+import org.util.*;
 
 
 public abstract class AbstractGame extends Observable{
