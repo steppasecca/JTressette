@@ -3,15 +3,16 @@ package org.view;
 import org.model.*;
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * componente grafico che rappresenta il tavolo da gioco
  */
 public class TablePanel extends JPanel {
 
-	private final List<PlayerSlot> slots = new ArrayList<>();
+	private final List<PlayerSlot> slots;
 	private final int slotCount;
 
 	public TablePanel(List<Player> players){
@@ -19,17 +20,12 @@ public class TablePanel extends JPanel {
 			throw new IllegalArgumentException("TablePanel supporta 2 o 4 giocatori/giocatrici");
 		}
 		this.slotCount = players.size();
+		this.slots = new ArrayList<>();
 		setLayout(null);
 		setBackground(new Color(20,80,55));
 		initSlots(players);
 	}
 	 
-	/**
-	 * metodo privato di utilità per inizializzare e aggiungere i playerSlot
-	 *
-	 * @param players
-	 * @return void
-	 */
 	private void initSlots(List<Player> players){
 		for(int i = 0;i<players.size();i++){
 			PlayerSlot ps = new PlayerSlot(players.get(i));
@@ -105,5 +101,38 @@ public class TablePanel extends JPanel {
         // opzionale: repaint centrale per animazione
         repaint();
     }
+
+	/**
+	 * gioca una carta con una piccola animazione
+	 * @param player la giocatrice che ha giocato
+	 * @param card la carta giocata
+	 */
+	public void playAnimatedCard(int playeridx, Card card){
+
+		if(playeridx < 0 || playeridx>slotCount) return;
+
+		PlayerSlot slotToMove = slots.get(playeridx);
+
+		if(slotToMove == null) return;
+		int startX = slotToMove.getX();
+		int startY = slotToMove.getY();
+
+		int targetX = getWidth()/2;
+		int targetY = getHeight()/2;
+
+		CardView animatedCard = new CardView(card);
+		animatedCard.setLocation(startX,startY);
+		add(animatedCard);
+		setComponentZOrder(animatedCard, 0); // portala davanti
+		repaint();
+
+		animatedCard.animateTo(startX, startY, targetX, targetY, () -> {
+			remove(animatedCard);
+			repaint();
+
+			slotToMove.setLastPlayedCard(card);
+		});
+	}	
+
 
 }

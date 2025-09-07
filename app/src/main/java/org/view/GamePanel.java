@@ -167,6 +167,16 @@ public class GamePanel extends JPanel {
 			appendLog("tablePanel non inizializzato");
 		}
 	}
+	/**
+	 * prova
+	 */
+	public void playCard(int playerIdx, org.model.Card card){
+		if(tablePanelComponent!=null){
+			tablePanelComponent.playAnimatedCard(playerIdx, card);
+		} else { 
+			appendLog("tb non inizializzato"); 
+		}
+	}
 
 	/**
 	 * chiama il matodo di TablePanel per evidenziare il giocatore corrente

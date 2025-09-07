@@ -7,19 +7,18 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 public class CardView extends JComponent {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L; //evita InvalidClassException
     private Card card;
     private BufferedImage image; // cached image for this card (from ImageCache)
 
     public CardView(Card card) {
         this.card = card;
         if (card != null) this.image = ImageCache.getImageForCard(card);
-        setPreferredSize(new Dimension(120, 180));
+		setSize(80, 120);
     }
 
 	/**
 	 * setter per la carta card
-	 *
 	 * @param card 
 	 * @return void
 	 */
@@ -69,4 +68,38 @@ public class CardView extends JComponent {
             g2.dispose();
         }
     }
+	
+	/**
+	 * metodo che produce un'animazione di una carta spostandola da un punto iniziale ad uno finale
+	 * @param x //coordinate di partenza
+	 * @param y
+	 * @param targetX //coordinate finali
+	 * @param targetY
+	 * @param onComplete //Runnable per callback quando finisce l'animazione
+	 */
+	public void animateTo(int startX, int startY, int targetX, int targetY, Runnable onComplete) {
+		int steps = 30;
+		int delay = 15;
+
+		double dx = (targetX - startX) / (double) steps;
+		double dy = (targetY - startY) / (double) steps;
+
+		final int[] currentStep = {0};
+		final double[] pos = {startX, startY};
+
+		Timer animTimer = new Timer(delay, e -> {
+			pos[0] += dx;
+			pos[1] += dy;
+			setLocation((int) Math.round(pos[0]), (int) Math.round(pos[1]));
+			repaint();
+
+			currentStep[0]++;
+			if (currentStep[0] >= steps) {
+				setLocation(targetX, targetY);
+				((Timer) e.getSource()).stop();
+				if (onComplete != null) onComplete.run();
+			}
+		});
+		animTimer.start();
+	}
 }

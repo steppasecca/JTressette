@@ -59,4 +59,8 @@ class PlayerSlot extends JPanel {
         setBorder(BorderFactory.createLineBorder(h ? Color.YELLOW : Color.DARK_GRAY, h ? 3 : 2));
         repaint();
     }
+
+	public Player getPlayer(){
+		return this.player;
+	}
 }

@@ -61,6 +61,8 @@ public class GameController implements Observer {
                         Play play = (Play) msg.getPayload();
                         view.appendLog("Il giocatore " + play.getPlayer().getNome() 
                                 + " ha giocato il " + play.getCard().toString());
+						int idx = game.getPlayers().indexOf(play.getPlayer());
+						view.playCard(idx,play.getCard());
                         refreshView();
                         break;
                     }
