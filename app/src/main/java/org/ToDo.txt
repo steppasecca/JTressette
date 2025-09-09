@@ -15,11 +15,16 @@ PRIORITY
 
 -- aggiustare la visualizzazione delle informazioni nel tablepanel come i componenti della squadra, l'avatar e boh
 
+-- modificare la classe playerslot della view ragionare sulla visualizzazione delle carte giocate
+	al centro del tavolo
+
 MIGLIORIE:
 
 -- valutare la possibilità  di aggiungere le modalità:
 		1.col morto(forse complesso perchè cambia la view del tablepanel
 		2. in due con 13 e la visualizzazione della carta distribuita ad ogni turno
+
+-- implementare diversi livelli di difficoltà dell'IA
 
 -- implementare un bottone pausa che esponga un semplice menu con le opzioni 1.torna al menu principale
 	2.resume

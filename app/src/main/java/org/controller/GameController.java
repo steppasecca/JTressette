@@ -54,88 +54,30 @@ public class GameController implements Observer {
                 ModelEventMessage msg = (ModelEventMessage) arg;
                 switch (msg.getEvent()) {
                     case CARDS_DEALT:
-                        refreshView();
+                        handleCardDealt();
                         break;
 
                     case CARD_PLAYED: {
-                        Play play = (Play) msg.getPayload();
-                        view.appendLog("Il giocatore " + play.getPlayer().getNome() 
-                                + " ha giocato il " + play.getCard().toString());
-						int idx = game.getPlayers().indexOf(play.getPlayer());
-						view.playCard(idx,play.getCard());
-                        refreshView();
+						handleCardPlayed((Play)msg.getPayload());
                         break;
                     }
 
                     case TURN_STARTED: {
-                        // il payload dovrebbe essere l'indice del giocatore corrente (Integer) oppure null (fallback)
-                        Object p = msg.getPayload();
-                        if (p instanceof Integer) {
-                            int idx = (Integer) p;
-                            view.setCurrentPlayer(idx);
-                            view.appendLog("TURN_STARTED payload indice: " + idx 
-                                + " (" + game.getPlayers().get(idx).getNome() + ")");
-                        } else {
-                            // fallback: usa lo stato del model
-                            view.appendLog("TURN_STARTED (no payload) currentIndex=" + game.getCurrentPlayerIndex());
-                            view.setCurrentPlayer(game.getCurrentPlayerIndex());
-                        }
-                        refreshView();
-                        triggerNextAiIfNeeded();
+                        handleTurnStarted(msg.getPayload());
                         break;
                     }
 
                     case TRICK_ENDED: {
-                        Object payload = msg.getPayload();
-                        Player winner = null;
-                        List<Play> playsForView = Collections.emptyList();
-
-                        // gestisce il nuovo payload Object[] {winner, playsSnapshot}
-                        if (payload instanceof Object[]) {
-                            Object[] arr = (Object[]) payload;
-                            if (arr.length >= 1 && arr[0] instanceof Player) {
-                                winner = (Player) arr[0];
-                            }
-                            if (arr.length >= 2 && arr[1] instanceof List) {
-                                playsForView = (List<Play>) arr[1];
-                            }
-                        } else if (payload instanceof Player) { //else if di sicurezza se si torna un payload con solo i player
-                            winner = (Player) payload;
-                        }
-
-                        if (winner != null) {
-                            view.appendLog("Ha preso questa mano: " + winner.getNome() 
-                                + " della squadra: " + winner.getTeam().getTeamName());
-                        } else {
-                            view.appendLog("Ha preso questa mano: (nessun winner nel payload)");
-                        }
-
-                        // mostra subito le carte della mano (snapshot)
-                        view.updateTable(playsForView, game.getPlayers());
-
-                        // tienile a video per 1 secondo, poi pulisci e lascia partire il nuovo turno
-                        new javax.swing.Timer(2000, e -> {
-                            ((javax.swing.Timer) e.getSource()).stop();
-                            view.updateTable(Collections.emptyList(), game.getPlayers());
-                            refreshView();
-                            // dopo la pulizia triggeriamo l'IA se tocca a lei
-                            triggerNextAiIfNeeded();
-                        }) {{
-                            setRepeats(false);
-                            start();
-                        }};
+                        handleTrickEnded(msg.getPayload());
                         break;
                     }
 
                     case ROUND_STARTED:
-                        refreshView();
+						handleRoundStarted();
                         break;
 
                     case ROUND_ENDED: {
-                        List<Team> teams = (List<Team>) msg.getPayload();
-                        view.updateScores(teams); 
-                        JOptionPane.showMessageDialog(view, "Fine della round! Si procede al prossimo.");
-                        refreshView();
+						handleRoundEnded((List<Team>) msg.getPayload());
                         break;
                     }
 
@@ -156,6 +98,104 @@ public class GameController implements Observer {
             }
         });
     }
+
+	/**
+	 * gestisce l'evento CARDS_DEALT
+	 */
+	private void handleCardDealt(){
+		refreshView();
+	}
+
+	/**
+	 * gestisce l'evento CardPlayed
+	 * @param play
+	 */
+	private void handleCardPlayed(Play play){
+		view.appendLog("Il giocatore " + play.getPlayer().getNome() 
+				+ " ha giocato il " + play.getCard().toString());
+		int idx = game.getPlayers().indexOf(play.getPlayer());
+		view.playCard(idx,play.getCard());
+		refreshView();
+	}
+
+	/**
+	 * gestisce l'evento TURN_STARTED
+	 *
+	 * @param param the param
+	 * @param anotherParam the anotherParam
+	 */
+	private void handleTurnStarted(Object p){
+		// il payload dovrebbe essere l'indice del giocatore corrente (Integer) oppure null (fallback)
+		if (p instanceof Integer) {
+			int idx = (Integer) p;
+			view.setCurrentPlayer(idx);
+			view.appendLog("TURN_STARTED payload indice: " + idx 
+					+ " (" + game.getPlayers().get(idx).getNome() + ")");
+		} else {
+			// fallback: usa lo stato del model
+			view.appendLog("TURN_STARTED (no payload) currentIndex=" + game.getCurrentPlayerIndex());
+			view.setCurrentPlayer(game.getCurrentPlayerIndex());
+		}
+		refreshView();
+		triggerNextAiIfNeeded();
+	}
+
+	private void handleTrickEnded(Object payload){
+		Player winner = null;
+		List<Play> playsForView = Collections.emptyList();
+
+		// gestisce il nuovo payload Object[] {winner, playsSnapshot}
+		if (payload instanceof Object[]) {
+			Object[] arr = (Object[]) payload;
+			if (arr.length >= 1 && arr[0] instanceof Player) {
+				winner = (Player) arr[0];
+			}
+			if (arr.length >= 2 && arr[1] instanceof List) {
+				playsForView = (List<Play>) arr[1];
+			}
+		} else if (payload instanceof Player) { //else if di sicurezza se si torna un payload con solo i player
+			winner = (Player) payload;
+		}
+
+		if (winner != null) {
+			view.appendLog("Ha preso questa mano: " + winner.getNome() 
+					+ " della squadra: " + winner.getTeam().getTeamName());
+		} else {
+			view.appendLog("Ha preso questa mano: (nessun winner nel payload)");
+		}
+
+		// mostra subito le carte della mano (snapshot)
+		view.updateTable(playsForView, game.getPlayers());
+
+		// tienile a video per 1 secondo, poi pulisci e lascia partire il nuovo turno
+		new javax.swing.Timer(2000, e -> {
+			((javax.swing.Timer) e.getSource()).stop();
+			view.updateTable(Collections.emptyList(), game.getPlayers());
+			refreshView();
+			// dopo la pulizia triggeriamo l'IA se tocca a lei
+			triggerNextAiIfNeeded();
+		}) {{
+			setRepeats(false);
+			start();
+		}};
+	}
+
+	/**
+	 * gestisce l'evento ROUND_STARTED
+	 */
+	private void handleRoundStarted(){
+		refreshView();
+	}
+
+	/**
+	 * gestisce l'evento ROUND_ENDED
+	 * @param teams
+	 */
+	private void handleRoundEnded(List<Team> teams){
+		view.updateScores(teams); 
+		JOptionPane.showMessageDialog(view, "Fine della round! Si procede al prossimo.");
+		refreshView();
+	}
 
     /** 
      * Aggiorna la view leggendo lo stato dal model 
