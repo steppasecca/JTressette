@@ -30,6 +30,11 @@ public class MainController {
 		frame.setSize(600,400);
 		frame.setLocationRelativeTo(null);
 
+		//creo il menu di pausa
+		PauseMenuPanel pauseMenu = new PauseMenuPanel();
+		pauseMenu.setVisible(false); // inizialmente nascosto
+		frame.setGlassPane(pauseMenu);
+
 		navigator = new Navigator(frame);
 
 		//inizializzo le schermate

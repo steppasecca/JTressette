@@ -73,6 +73,7 @@ public class TressetteGame extends AbstractGame{
      * Avvia una nuova partita: mischia il mazzo e distribuisce le carte.
      */
     public void startGame() {
+		startPlayer = players.get((int)(Math.random() * players.size()));
 		startRound();
     }
 
@@ -84,7 +85,7 @@ public class TressetteGame extends AbstractGame{
         this.deck.shuffle();
         this.dealCards();
         this.currentTrick = new Trick();
-        this.currentPlayerIndex = 0;
+        this.currentPlayer = startPlayer;
 		for(Player player: players){
 			player.getHand().sort();
 		} //ordina le carte delle giocatrici
@@ -101,13 +102,12 @@ public class TressetteGame extends AbstractGame{
     @Override
     public void nextTurn() {
         if (currentTrick.size() < players.size()) {
-            Player currentPlayer = players.get(currentPlayerIndex);
             
             // Sposta il turno al prossimo giocatore
-            currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
+            currentPlayer = players.get((getPlayerIndex(currentPlayer) + 1) % players.size());
 
             setChanged();
-            notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TURN_STARTED, currentPlayerIndex));
+            notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TURN_STARTED, getPlayerIndex(currentPlayer)));
         } else {
             // La presa è finita, determina il vincitore
             endTrick();
@@ -119,14 +119,12 @@ public class TressetteGame extends AbstractGame{
      */
 	private void endTrick() {
 		Player winner = currentTrick.getWinningPlayer();
-		int winnerIndex = -1;
 
 		//salvo le giocate prima di pulire il trick
 		List<Play> plays = currentTrick.getPlays();
 		if (winner != null) {
 			winner.getTeam().addTrick(currentTrick);
-			winnerIndex = players.indexOf(winner);
-			this.currentPlayerIndex = winnerIndex;
+			this.currentPlayer = winner;
 		}
 		Object[] payload = new Object[]{winner, plays};
 		setChanged();
@@ -153,7 +151,7 @@ public class TressetteGame extends AbstractGame{
 			handleRoundEnd();
 		} else {
 			this.currentTrick = new Trick();
-			notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TURN_STARTED,currentPlayerIndex));
+			notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TURN_STARTED,getPlayerIndex(currentPlayer)));
 		}
 	}
 
@@ -163,12 +161,14 @@ public class TressetteGame extends AbstractGame{
 	 */
 	private void handleRoundEnd(){
 
-		Team teamTooksLast = players.get(currentPlayerIndex).getTeam(); //dovrebbe essere il vincitore perché alla fine del trick 
+		Team teamTooksLast = currentPlayer.getTeam(); //dovrebbe essere il vincitore perché alla fine del trick 
 																 //viene comunque cambiato l'indice al vincitore della mano
 		for(Team team : teams){
 			if(teamTooksLast.equals(team)){ team.updateTotalScore(true);}
 			else{ team.updateTotalScore(false);}	
 		}
+
+		startPlayer = players.get((players.indexOf(startPlayer) + 1) % players.size());
 
 		//notifico la view che il round sia finito
 		setChanged();
@@ -194,7 +194,7 @@ public class TressetteGame extends AbstractGame{
 		Card card = play.getCard();
 
 		// Deve essere il turno giusto
-		if (players.get(currentPlayerIndex) != player) return false;
+		if(!currentPlayer.equals(player)) return false;
 
 		// La carta deve stare nella mano
 		if (!player.getHand().containsCard(card)) return false;

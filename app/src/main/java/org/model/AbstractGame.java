@@ -13,14 +13,14 @@ public abstract class AbstractGame extends Observable{
     protected List<Player> players; //lista di giocatori/giocatrici
     protected List<Team> teams; //lista delle squadre 
     protected Trick currentTrick; //"giocata" attuale ovvero le carte sul tavolo
-    protected int currentPlayerIndex; //indice del giocator che deve giocare
+    protected Player currentPlayer; //giocator che deve giocare
+	protected Player startPlayer; //giocatore che inizia il round
 
     public AbstractGame() {
         this.deck = null;
         this.players = null;
         this.teams = null;
         this.currentTrick = null;
-        this.currentPlayerIndex = 0;
     }
 
 	/**
@@ -77,9 +77,12 @@ public abstract class AbstractGame extends Observable{
     }
     
 	/**
-	 * @return currentPlayerIndex indece del giocatore corrente
+	 * @return indexOf(player) indece del giocatore corrente
 	 */
-    public int getCurrentPlayerIndex() {
-        return currentPlayerIndex;
+    public int getPlayerIndex(Player player) {
+        return players.indexOf(player);
     }
+	public Player getCurrentPlayer(){ return currentPlayer;}
+
+	public Player getStartPlayer(){return startPlayer;}
 }

@@ -3,8 +3,7 @@ package org.controller;
 
 import org.model.*;
 import org.util.*;
-import org.view.GamePanel;
-import org.view.TablePanel;
+import org.view.*;
 
 import javax.swing.*;
 import java.util.List;
@@ -38,6 +37,8 @@ public class GameController implements Observer {
         // listener per il click sulla carta che invoca handleHumanPlay
         this.view.setCardClickListener(card -> handleHumanPlay(card));
 
+		//collega i bottoni ai listener
+		handlePauseMenu();
         // inizializza view con stato corrente
         refreshView();
 
@@ -133,8 +134,8 @@ public class GameController implements Observer {
 					+ " (" + game.getPlayers().get(idx).getNome() + ")");
 		} else {
 			// fallback: usa lo stato del model
-			view.appendLog("TURN_STARTED (no payload) currentIndex=" + game.getCurrentPlayerIndex());
-			view.setCurrentPlayer(game.getCurrentPlayerIndex());
+			view.appendLog("TURN_STARTED (no payload) currentIndex=" + game.getPlayerIndex(game.getCurrentPlayer()));
+			view.setCurrentPlayer(game.getPlayerIndex(game.getCurrentPlayer()));
 		}
 		refreshView();
 		triggerNextAiIfNeeded();
@@ -214,7 +215,7 @@ public class GameController implements Observer {
         view.updateTable(plays, game.getPlayers());
 
         // indica il giocatore corrente tramite indice
-        view.setCurrentPlayer(game.getCurrentPlayerIndex());
+        view.setCurrentPlayer(game.getPlayerIndex(game.getCurrentPlayer()));
     }
 
     private synchronized void handleHumanPlay(org.model.Card card) {
@@ -226,13 +227,41 @@ public class GameController implements Observer {
         }
     }
 
+	private void handlePauseMenu(){
+		JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(view);
+		if (frame == null) {
+			// fallback: se il frame non è ancora pronto, rinvia
+			SwingUtilities.invokeLater(this::handlePauseMenu);
+			return;
+		}
+
+		PauseMenuPanel pauseMenu = (PauseMenuPanel) frame.getGlassPane();
+
+		pauseMenu.setOnResume(() -> pauseMenu.setVisible(false));
+
+		pauseMenu.setOnToggleMusic(() -> {
+			if (AudioManager.getInstance().isPlaying()) {
+				AudioManager.getInstance().stopBackground();
+				view.appendLog("Musica spenta");
+			} else {
+				AudioManager.getInstance().playBackground("musica.wav"); // usa il tuo file
+				view.appendLog("Musica accesa");
+			}
+		});
+
+		pauseMenu.setOnReturnToMenu(() -> {
+			pauseMenu.setVisible(false);
+			navigator.navigate(Navigator.Screen.MENU);
+		});
+	}
+
     /**
      * Se il giocatore corrente è un'IA, avvia la loro mossa in background.
      */
     private void triggerNextAiIfNeeded() {
         if (game.isRoundOver() || game.isGameOver()) return;
 
-        int idx = game.getCurrentPlayerIndex();
+        int idx = game.getPlayerIndex(game.getCurrentPlayer());
         Player current = game.getPlayers().get(idx);
 
         // debug log: utile per capire perché l'IA non parte
@@ -253,7 +282,7 @@ public class GameController implements Observer {
                         Card card = get();
                         if (card != null) {
                             // controllo per evitare che tenti di giocare anche quando non è il suo turno
-                            if (game.getPlayers().get(game.getCurrentPlayerIndex()) != current) {
+                            if (game.getCurrentPlayer() != current) {
                                 view.appendLog("[DEBUG] IA scelta scartata: non è più il turno (index changed).");
                                 return;
                             }

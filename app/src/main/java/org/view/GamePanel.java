@@ -18,6 +18,11 @@ public class GamePanel extends JPanel {
 	private final JPanel handPanel = new JPanel(new FlowLayout(FlowLayout.CENTER,5,5));
 	private final JTextArea logArea = new JTextArea(8,20);
 
+	//gestione pausa
+	private JButton pauseButton;
+	private PauseMenuPanel pauseMenuPanel;
+	private Consumer<PauseMenuPanel> pauseMenuListener;
+
 	private Consumer<Card> cardClickListener = c -> {};
 
 
@@ -37,6 +42,16 @@ public class GamePanel extends JPanel {
 		JPanel top = new JPanel(new BorderLayout());
 		top.add(new JLabel("punteggi: "),BorderLayout.NORTH);
 		top.add(scorePanel,BorderLayout.CENTER);
+
+		pauseButton = new JButton("pausa");
+		pauseButton.addActionListener(e -> {
+			JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(GamePanel.this);
+			if (topFrame != null && topFrame.getGlassPane() instanceof PauseMenuPanel menuPanel) {
+				menuPanel.setVisible(true); // mostra menuPanel
+			}
+		});
+		top.add(pauseButton,BorderLayout.EAST);
+		
 
 
 		//in basso la mano e i pulsanti
@@ -60,6 +75,45 @@ public class GamePanel extends JPanel {
 		add(bottom, BorderLayout.SOUTH);
 		add(east, BorderLayout.EAST);
 
+	}
+
+	/**
+	 * mostra il pannello pauseMenuPanel
+	 */
+    public void showPauseMenuPanel() {
+        if (pauseMenuPanel == null) {
+            pauseMenuPanel = new PauseMenuPanel();
+            if (pauseMenuListener != null) {
+                pauseMenuListener.accept(pauseMenuPanel);
+            }
+        }
+        setLayout(new OverlayLayout(this));
+        add(pauseMenuPanel, 0); // sopra tutto
+        revalidate();
+        repaint();
+    }
+
+	/**
+	 * nasconde il pannello pauseMenuPanel
+	 */
+	public void hidePauseMenuPanel(){
+
+		if(pauseMenuPanel!=null) { 
+			remove(pauseMenuPanel);
+			pauseMenuPanel = null;
+			revalidate();
+			repaint();
+		}
+	}
+
+	/**
+	 * getter per pauseMenuPanell
+	 * @return pauseMenuPanel
+	 */
+	public PauseMenuPanel getPauseMenuPanel() {return this.pauseMenuPanel;}
+
+	public void setPauseMenuListener(Consumer<PauseMenuPanel> listener){
+		this.pauseMenuListener = listener;
 	}
 
 	/**
