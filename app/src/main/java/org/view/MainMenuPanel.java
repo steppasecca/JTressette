@@ -24,6 +24,7 @@ public class MainMenuPanel extends JPanel implements Observer{
 	private final  JComboBox<String> modeSelector;
 
 	private final UserProfile profile;
+	private ProfileOptionPanel optionPanel;
 
 	public MainMenuPanel(UserProfile profile){
 		super(new GridBagLayout());
@@ -60,6 +61,7 @@ public class MainMenuPanel extends JPanel implements Observer{
         inner.add(startButton, gbc);
 
         // Pulsante Opzioni
+		optionsProfileButton.addActionListener(e -> showOptionPanel());
         gbc.gridy = 3;
         inner.add(optionsProfileButton, gbc);
 
@@ -68,7 +70,23 @@ public class MainMenuPanel extends JPanel implements Observer{
         modeSelector = new JComboBox<>(new String[] { "2 Giocatori", "4 Giocatori" });
         inner.add(modeSelector, gbc);
 
-        add(inner);}
+        add(inner);
+	}
+
+	
+	private void showOptionPanel() {
+		JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+		if (topFrame != null && topFrame.getGlassPane() instanceof ProfileOptionPanel optionPanel) {
+			optionPanel.setVisible(true);
+		}
+	}
+
+	private void hideOptionPanel() {
+		JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+		if (topFrame != null && topFrame.getGlassPane() instanceof ProfileOptionPanel optionPanel) {
+			optionPanel.setVisible(false);
+		}
+	}
 
     public JButton getStartButton() { return startButton; }
     public JButton getOptionsButton() { return optionsProfileButton; }

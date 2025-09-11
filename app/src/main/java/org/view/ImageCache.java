@@ -8,8 +8,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * classe di utilità semplice per caricare una sola volta le immagini delle carte
- * (carica da /cards/<filename>).
+ * classe di utilità semplice per caricare una sola volta le immagini delle carte 
+ * (carica da images/cards/filename) per le carte. 
+ * 
  */
 public final class ImageCache {
 

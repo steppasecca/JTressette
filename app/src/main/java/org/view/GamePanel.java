@@ -23,8 +23,8 @@ public class GamePanel extends JPanel {
 	private PauseMenuPanel pauseMenuPanel;
 	private Consumer<PauseMenuPanel> pauseMenuListener;
 
+	//listener click sulle carte
 	private Consumer<Card> cardClickListener = c -> {};
-
 
 	public GamePanel(){
 		super(new BorderLayout(8,8));

@@ -34,6 +34,22 @@ public class MainController {
 		PauseMenuPanel pauseMenu = new PauseMenuPanel();
 		pauseMenu.setVisible(false); // inizialmente nascosto
 		frame.setGlassPane(pauseMenu);
+		 
+		// Creazione del ProfileOptionPanel come glasspane
+		ProfileOptionPanel optionPanel = new ProfileOptionPanel(profile);
+		optionPanel.setVisible(false);
+
+		// callback per pulsanti
+		optionPanel.setOnSave(() -> {
+			// il profilo si aggiorna automaticamente tramite Observer
+			optionPanel.setVisible(false);
+		});
+		optionPanel.setOnCancel(() -> {
+			optionPanel.setVisible(false);
+		});
+
+		// Imposto il ProfileOptionPanel come glasspane
+		frame.setGlassPane(optionPanel);
 
 		navigator = new Navigator(frame);
 
@@ -51,12 +67,6 @@ public class MainController {
 		MainMenuPanel menuPanel = new MainMenuPanel(profile);
 		navigator.addScreen(Navigator.Screen.MENU,menuPanel);
 
-		//listener per "menu delle opzioni"
-		menuPanel.getOptionsButton().addActionListener( e -> {
-			OptionsDialog dialog = new OptionsDialog(profile);
-			dialog.setVisible(true);
-			saveProfile();
-		});
 		menuPanel.getStartButton().addActionListener(e -> {
 			String mode = menuPanel.getSelectedMode();
 			startGame(mode);

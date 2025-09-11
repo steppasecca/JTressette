@@ -78,8 +78,8 @@ public class CardView extends JComponent {
 	 * @param onComplete //Runnable per callback quando finisce l'animazione
 	 */
 	public void animateTo(int startX, int startY, int targetX, int targetY, Runnable onComplete) {
-		int steps = 30;
-		int delay = 15;
+		int steps = 40;
+		int delay = 20;
 
 		double dx = (targetX - startX) / (double) steps;
 		double dy = (targetY - startY) / (double) steps;

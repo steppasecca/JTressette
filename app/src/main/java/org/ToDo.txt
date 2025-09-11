@@ -18,6 +18,8 @@ PRIORITY
 -- modificare la classe playerslot della view ragionare sulla visualizzazione delle carte giocate
 	al centro del tavolo
 
+-- trasformare il pannelo delle opzioni della modifica del profilo esso stesso in un glassPane
+
 MIGLIORIE:
 
 -- valutare la possibilità  di aggiungere le modalità:
