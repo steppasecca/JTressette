@@ -1,18 +1,26 @@
 package org.view;
 
 import org.model.*;
+import org.controller.GameController;
+import org.util.ModelEventMessage;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.function.Consumer;
+import java.util.Observer;
+import java.util.Observable;
+import java.util.Collections;
 
 /**
  * componente grafico principale per il gioco
  */
-public class GamePanel extends JPanel {
+public class GamePanel extends JPanel implements Observer{
 
+	//controller
+	private GameController controller;
 	private final JPanel scorePanel = new JPanel(new GridLayout(0,1));
 	private TablePanel tablePanelComponent;
 	private final JPanel handPanel = new JPanel(new FlowLayout(FlowLayout.CENTER,5,5));
@@ -261,6 +269,153 @@ public class GamePanel extends JPanel {
 		logArea.setCaretPosition(logArea.getDocument().getLength());
 	}
 
+    /**
+     * Imposta il controller per permettere alla vista di delegare azioni.
+     * @param controller Il GameController che gestisce la logica.
+     */
+    public void setController(GameController controller) {
+        this.controller = controller;
+    }
+
+    public void update(Observable o, Object arg) {
+        SwingUtilities.invokeLater(() -> {
+            if (arg instanceof ModelEventMessage msg) {
+                switch (msg.getEvent()) {
+                    case CARDS_DEALT -> handleCardsDealt(msg.getPayload());
+                    case CARD_PLAYED -> handleCardPlayed(msg.getPayload());
+                    case TURN_STARTED -> handleTurnStarted(msg.getPayload());
+                    case TRICK_ENDED -> handleTrickEnded(msg.getPayload());
+                    case ROUND_STARTED -> handleRoundStarted();
+                    case ROUND_ENDED -> handleRoundEnded((List<Team>) msg.getPayload());
+                    case GAME_OVER -> handleGameOver();
+                    // Aggiunto un evento generico per un refresh completo
+                    case GAME_STATE_UPDATE -> handleGameStateUpdate(msg.getPayload());
+                }
+            }
+        });
+    }
+
+
+	/**
+     * Gestisce l'evento CARDS_DEALT.
+     * @param payload Si aspetta una List<Card> rappresentante la mano del giocatore umano.
+     */
+    private void handleCardsDealt(Object payload) {
+        if (payload instanceof List) {
+            List<Card> hand = (List<Card>) payload;
+            updateHand(hand);
+            appendLog("Le carte sono state distribuite.");
+        }
+    }
+    
+    /**
+     * Gestisce l'evento GAME_STATE_UPDATE per un refresh completo.
+     * @param payload Si aspetta un Object[] {List<Card> hand, List<Play> plays, List<Player> players, List<Team> teams, Integer currentPlayerIndex}
+     */
+    private void handleGameStateUpdate(Object payload) {
+        if (payload instanceof Object[] data) {
+            updateHand((List<Card>) data[0]);
+            updateTable((List<Play>) data[1], (List<Player>) data[2]);
+            updateScores((List<Team>) data[3]);
+            setCurrentPlayer((Integer) data[4]);
+            appendLog("Vista aggiornata completamente.");
+        }
+    }
+
+    /**
+     * Gestisce l'evento CARD_PLAYED.
+     * @param payload Si aspetta un Object[] {Play play, List<Player> players}.
+     */
+    private void handleCardPlayed(Object payload) {
+        if (payload instanceof Object[] data) {
+            Play play = (Play) data[0];
+            List<Player> players = (List<Player>) data[1];
+            appendLog("Il giocatore " + play.getPlayer().getNome() + " ha giocato " + play.getCard().toString());
+            int idx = players.indexOf(play.getPlayer());
+            if (idx >= 0) {
+                playCard(idx, play.getCard());
+            }
+        }
+    }
+
+	
+    /**
+     * Gestisce l'evento TURN_STARTED.
+     * @param payload Si aspetta un Integer con l'indice del giocatore di turno.
+     */
+    private void handleTurnStarted(Object payload) {
+        if (payload instanceof Integer idx) {
+            setCurrentPlayer(idx);
+        } else {
+            System.err.println("handleTurnStarted: Payload non valido.");
+        }
+    }
+
+	private void handleTrickEnded(Object payload){
+		Player winner = null;
+		List<Play> plays = Collections.emptyList();
+		List<Player> players = Collections.emptyList();
+
+		// gestisce il nuovo payload Object[] {winner, playsSnapshot}
+		if (payload instanceof Object[]) {
+			Object[] arr = (Object[]) payload;
+			if (arr.length >= 1 && arr[0] instanceof Player) {
+				winner = (Player) arr[0];
+			}
+			if (arr.length >= 2 && arr[1] instanceof List) {
+				plays = (List<Play>) arr[1];
+				for(Play play: plays){
+					players.add(play.getPlayer());
+				}
+
+			}
+		} else if (payload instanceof Player) { //else if di sicurezza se si torna un payload con solo i player
+			winner = (Player) payload;
+		}
+
+		if (winner != null) {
+			appendLog("Ha preso questa mano: " + winner.getNome() 
+					+ " della squadra: " + winner.getTeam().getTeamName());
+		} else {
+			appendLog("Ha preso questa mano: (nessun winner nel payload)");
+		}
+
+		// mostra subito le carte della mano (snapshot)
+		
+		updateTable(plays, players);
+
+		// tienile a video per 1 secondo, poi pulisci e lascia partire il nuovo turno
+		new javax.swing.Timer(2000, e -> {
+			((javax.swing.Timer) e.getSource()).stop();
+			updateTable(Collections.emptyList(), players);
+		}) {{
+			setRepeats(false);
+			start();
+		}};
+	}
+
+    /**
+     * Gestisce l'evento ROUND_STARTED.
+     */
+    private void handleRoundStarted() {
+        appendLog("Nuovo round iniziato!");
+        // La pulizia del tavolo e della mano avverrà con i successivi eventi (es. CARDS_DEALT)
+    }
+
+	/**
+	 * gestisce l'evento ROUND_ENDED
+	 * @param teams
+	 */
+	private void handleRoundEnded(List<Team> teams){
+		updateScores(teams); 
+		JOptionPane.showMessageDialog(this, "Fine della round! Si procede al prossimo.");
+	}
+
+	    private void handleGameOver() {
+        // Qui si potrebbe mostrare un pannello di fine partita.
+        JOptionPane.showMessageDialog(this, "La partita è finita!", "Game Over", JOptionPane.INFORMATION_MESSAGE);
+        appendLog("Partita terminata.");
+    }
+    
+
 }
-
-

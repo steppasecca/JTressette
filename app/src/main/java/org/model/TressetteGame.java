@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Collections;
 
 import org.util.*;
 
@@ -61,11 +62,38 @@ public class TressetteGame extends AbstractGame{
 
 	}
 
+	/**
+	 * Notifica la view con lo stato completo del gioco. Utile all'avvio.
+	 */
+	public void notifyInitialState() {
+		Player human = players.stream()
+			.filter(p -> p instanceof HumanPlayer)
+			.findFirst()
+			.orElse(null);
+
+		List<Card> humanHand = (human != null && human.getHand() != null) ? human.getHand().getCards() : Collections.emptyList();
+		List<Play> currentPlays = (currentTrick != null) ? currentTrick.getPlays() : Collections.emptyList();
+		List<Player> allPlayers = getPlayers();
+		List<Team> allTeams = getTeams();
+		Integer currentPlayerIndex = getPlayerIndex(getCurrentPlayer());
+
+		Object[] payload = {humanHand, currentPlays, allPlayers, allTeams, currentPlayerIndex};
+
+		setChanged();
+		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.GAME_STATE_UPDATE, payload));
+	}
 	@Override
 	protected void dealCards(){
 		gameMode.dealInitialCards(players, deck);
-		setChanged();
-		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.CARDS_DEALT,null));
+		Player human = players.stream()
+				.filter(p -> p instanceof HumanPlayer)
+				.findFirst()
+				.orElse(null);
+
+			List<Card> humanHand = (human != null) ? human.getHand().getCards() : Collections.emptyList();
+			
+			setChanged();
+			notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.CARDS_DEALT, humanHand));
 	}
 
 
@@ -75,6 +103,7 @@ public class TressetteGame extends AbstractGame{
     public void startGame() {
 		startPlayer = players.get((int)(Math.random() * players.size()));
 		startRound();
+		notifyInitialState();
     }
 
     /**
@@ -233,7 +262,9 @@ public class TressetteGame extends AbstractGame{
 
 		//notifico la view
 		setChanged();
-		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.CARD_PLAYED,play));
+		// Includi sia la giocata (play) sia la lista dei giocatori
+		Object[] payload = {play, getPlayers()};
+		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.CARD_PLAYED, payload));
 		
 		//avanza il turno
 		nextTurn();

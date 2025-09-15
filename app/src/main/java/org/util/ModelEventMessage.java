@@ -36,7 +36,6 @@ public class ModelEventMessage {
 		GAME_STARTED,
 		GAME_OVER,
 		PROFILE_CHANGED,
-		PLAYER_JOINED,
-		PLAYER_LEFT,
+		GAME_STATE_UPDATE,
 	}
 }
