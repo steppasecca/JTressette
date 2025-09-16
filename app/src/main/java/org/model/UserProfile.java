@@ -1,16 +1,11 @@
 package org.model;
 
-import java.io.*;
-import java.util.Properties;
-
-import org.util.*;
-import java.util.Observable;
 
 /**
  * modella il profilo di un utente
  */
 
-public class UserProfile extends Observable{
+public class UserProfile{
 
 	private String nickname;
 	private String avatarPath;
@@ -39,8 +34,6 @@ public class UserProfile extends Observable{
 	 */
 	public void setNickname(String nickname){
 		this.nickname = nickname;
-		setChanged();
-		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.PROFILE_CHANGED, this));
 	}
 
 	/**
@@ -51,8 +44,6 @@ public class UserProfile extends Observable{
 	 */
 	public void setAvatarPath(String avatarPath){
 		this.avatarPath = avatarPath;
-		setChanged();
-		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.PROFILE_CHANGED, this));
 	}
 
 	/**
@@ -60,59 +51,26 @@ public class UserProfile extends Observable{
 	 * @param won boolean
 	 * @return void
 	 */
-
 	public void addGame(boolean won){
 		this.gamesPlayed++;
 		if(won){gamesWon++;}
-		setChanged();
-		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.PROFILE_CHANGED, this));
-	
 	}
 
 	/**
-	 * metodo che salva il profile su un file
-	 *
-	 * @param file File
-	 * @return void
+	 *setter per il gamesWon 
+	 * @param gamesWon
 	 */
-
-	public void saveToProperties(File file) throws IOException{
-		Properties props = new Properties();
-		props.setProperty("nickname",nickname);
-		props.setProperty("avatarPath", avatarPath == null ? "" : avatarPath);
-		props.setProperty("gamesPlayed", String.valueOf(gamesPlayed));
-		props.setProperty("gamesWon", String.valueOf(gamesWon));
-		try (FileOutputStream fos = new FileOutputStream(file)) {
-			props.store(fos, "User Profile");
-		}
+	public void setGamesWon(int gamesWon){
+		this.gamesWon = gamesWon;
 	}
 
-	public static UserProfile loadFromProperties(File file) throws IOException {
-		if (!file.exists()) {
-			return new UserProfile("Player");
-		}
+	/**
+	 * setter per i gamesPlayed
+	 * @param gamesPlayed
+	 */
+	public void setGamesPlayed(int gamesPlayed){
+		this.gamesPlayed = gamesPlayed;
 
-		Properties props = new Properties();
-		try (FileInputStream fis = new FileInputStream(file)) {
-			props.load(fis);
-		}
-
-		UserProfile profile = new UserProfile(props.getProperty("nickname", "Player"));
-		profile.avatarPath = props.getProperty("avatarPath", "");
-
-		try {
-			profile.gamesPlayed = Integer.parseInt(props.getProperty("gamesPlayed", "0"));
-		} catch (NumberFormatException e) {
-			profile.gamesPlayed = 0;
-		}
-
-		try {
-			profile.gamesWon = Integer.parseInt(props.getProperty("gamesWon", "0"));
-		} catch (NumberFormatException e) {
-			profile.gamesWon = 0;
-		}
-
-		return profile;
 	}
 
 }

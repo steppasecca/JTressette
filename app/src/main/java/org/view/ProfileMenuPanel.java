@@ -4,9 +4,9 @@ import javax.swing.*;
 import java.util.Observer;
 import java.util.Observable;
 
-public class ProfileOptionPanel extends JPanel implements Observer{
+public class ProfileMenuPanel extends JPanel implements Observer{
 
-	public ProfileOptionPanel(){
+	public ProfileMenuPanel(){
 	}
 
 	public void update(Observable o, Object arg){

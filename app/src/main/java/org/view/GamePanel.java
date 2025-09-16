@@ -6,6 +6,7 @@ import java.util.Observable;
 
 public class GamePanel extends JPanel implements Observer{
 
+	private TablePanel tablePanel;
 
 	public void update(Observable o, Object arg){
 	}

@@ -10,8 +10,6 @@ public class MainMenuPanel extends JPanel{
 
 	//sotto-pannelli
 	private JPanel mainPanel;
-	private GamePanel gamePanel;
-	private ProfileOptionPanel profileOptionPanel;
 
 	//bottoni
 	private final  JComboBox<String> modeSelector;

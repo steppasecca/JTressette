@@ -1,16 +1,27 @@
 package org.controller;
 
 import org.view.GamePanel;
+import org.view.PauseMenuPanel;
 import org.model.TressetteGame;
 
 public class GameController{
 
 	private AppController appController;
 	private GamePanel view;
+	private PauseMenuPanel pauseMenuPanel;
 	private TressetteGame model;
 
 	public GameController(AppController appController){
+		
 		this.appController = appController;
+		this.view = new GamePanel();
+
+		//creo e imposto il PauseMenuPanel come GlassPane
+		this.pauseMenuPanel = new PauseMenuPanel();
+		appController.setGlassPane(pauseMenuPanel);
+
+		//setto i callback per i bottoni del pauseMenu
+		setPausePanelCallback();
 	}
 
 	/**
@@ -18,4 +29,21 @@ public class GameController{
 	 * @return view
 	 */
 	public GamePanel getView(){return view;}
+
+	/**
+	 * getter per il pauseMenuPanel
+	 * @return pauseMenuPanel
+	 */
+	public PauseMenuPanel getPauseMenuPanel(){return pauseMenuPanel;}
+
+	/**
+	 * metodo di utilità che setta i callback dei bottoni
+	 */
+	private void setPausePanelCallback(){
+
+		pauseMenuPanel.setOnResume(() -> appController.toggleGlassPane(false);
+		pauseMenuPanel.setOnToggleMusic(null);
+		pauseMenuPanel.setOnReturnToMenu(()->appController.showMainMenu());
+	}
+
 }

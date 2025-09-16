@@ -29,6 +29,9 @@ public class AppController{
 		//creo il controller dell profile option
 		profileController = new ProfileController(this);
 
+		//mostro il menu principale
+		showMainMenu();
+
 	}
 	/**
 	 * metodo privato di utilità per inizializzare il frame principale
@@ -63,6 +66,21 @@ public class AppController{
 		mainFrame.setContentPane(profileController.getView());
 	}
 
+	/**
+     * Imposta un componente come GlassPane del frame principale.
+     * @param pane Il componente da usare come GlassPane.
+     */
+    public void setGlassPane(JComponent pane) {
+        mainFrame.setGlassPane(pane);
+    }
+
+    /**
+     * setta la visibilità del GlassPane.
+     * @param visible true per mostrarlo, false per nasconderlo.
+     */
+    public void toggleGlassPane(boolean visible) {
+        mainFrame.getGlassPane().setVisible(visible);
+    }
 	
 }
 

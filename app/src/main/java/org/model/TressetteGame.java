@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.Optional;
 
 import org.util.*;
 
@@ -212,11 +214,31 @@ public class TressetteGame extends AbstractGame{
 		//controllo se sa finita la partita forse potrei eliminare il controllo in endTrick()
 
 		if(isGameOver()){
-			setChanged();
-			notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.GAME_OVER, null));
+			handleGameOver();
 		} else {
 			startRound();
 		}
+	}
+
+	public void handleGameOver(){
+		this.winningTeam = teams.stream()
+		   .max(Comparator.comparingInt(Team::getTeamPoints))
+		   .orElseThrow();
+		if(userProfile != null){
+			Optional<Player> humanPlayer = winningTeam.getPlayers().stream().
+				filter(p -> p instanceof HumanPlayer)
+				.findFirst();
+			if(humanPlayer.isPresent()){
+				userProfile.addGame(true);	
+			} else {
+				userProfile.addGame(false);
+			}
+			setChanged();
+			notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.PROFILE_CHANGED,null));
+		}
+			
+		setChanged();
+		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.GAME_OVER, null));
 	}
 
 	/**

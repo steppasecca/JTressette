@@ -15,6 +15,7 @@ public abstract class AbstractGame extends Observable{
     protected Trick currentTrick; //"giocata" attuale ovvero le carte sul tavolo
     protected Player currentPlayer; //giocator che deve giocare
 	protected Player startPlayer; //giocatore che inizia il round
+	protected Team winningTeam;
 
     public AbstractGame() {
         this.deck = null;
