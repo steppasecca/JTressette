@@ -34,7 +34,7 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = "org.controller.JTressette"
+    mainClass = "org.controller.Main"
 }
 
 tasks.named<Test>("test") {

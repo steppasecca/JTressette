@@ -26,6 +26,12 @@ public class TressetteGame extends AbstractGame{
 		this.userProfile = userProfile;
         setupGame(userProfile);
     }
+    public TressetteGame(GameModeStrategy gameMode) {
+        super();
+        this.gameMode = gameMode;
+		this.userProfile = null;
+        setupGame(this.userProfile);
+    }
 	/**
      * Metodo di configurazione che utilizza la strategia per inizializzare giocatori e squadre.
 	 * @param userProfile
@@ -47,7 +53,7 @@ public class TressetteGame extends AbstractGame{
 				// riserva il primo slot al giocatore umano (se presente)
                 boolean isHumanSlot = (t == 0 && p == 0) && profile != null;
                 if (isHumanSlot) {
-                    String nick = profile.getNickname() != null && !profile.getNickname().isBlank()
+                    String nick = profile!=null && profile.getNickname() != null && !profile.getNickname().isBlank()
                             ? profile.getNickname() : "HumanPlayer";
                     newPlayer = new HumanPlayer(nick);
                 } else {

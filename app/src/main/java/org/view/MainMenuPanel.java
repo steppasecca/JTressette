@@ -1,45 +1,47 @@
 package org.view;
 
 import javax.swing.*;
-
 import java.awt.*;
 
-import org.model.UserProfile;
 
-import java.util.Observer;
-import java.util.Observable;
+public class MainMenuPanel extends JPanel{
 
-/**
- * la classe menu rappresenta la prima interfaccia del gioco
- */
+	private String titolo = "JTressette";
 
-public class MainMenuPanel extends JPanel implements Observer{
+	//sotto-pannelli
+	private JPanel mainPanel;
+	private GamePanel gamePanel;
+	private ProfileOptionPanel profileOptionPanel;
 
-	private final JLabel nicknameLabel = new JLabel();
-	private final JLabel gamesLabel = new JLabel();
-	private final JLabel winsLabel = new JLabel();
-
-	private JButton startButton = new JButton("nuova partita");
-	private JButton optionsProfileButton = new JButton("opzioni profilo");
+	//bottoni
 	private final  JComboBox<String> modeSelector;
 
-	private final UserProfile profile;
-	private ProfileOptionPanel optionPanel;
+	//callback
+	private Runnable onStart;
+	private Runnable onToggleOption;
 
-	public MainMenuPanel(UserProfile profile){
+	public MainMenuPanel(){
 		super(new GridBagLayout());
-		this.profile = profile;
-		if(profile != null){
-			profile.addObserver(this);
-			refreshFromProfile();
-		}
 
+		//definisco i bottoni
+		JButton startButton = new JButton("Gicca!");
+		JButton optionsProfileButton = new JButton("opzioni profilo");
+
+		//aggiungo i callback per i bottoni
+		startButton.addActionListener(e-> {
+			if(onStart != null){onStart.run();}
+		});
+
+		optionsProfileButton.addActionListener( e-> {
+			if(onToggleOption!=null){onToggleOption.run();}
+		});
 		//layout principale
 		JPanel inner = new JPanel(new GridBagLayout());
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.weightx = 1;
 		gbc.insets = new Insets(5, 5, 5, 5);
 		gbc.fill = GridBagConstraints.HORIZONTAL;
+
 
 		// Titolo
         gbc.gridx = 0; gbc.gridy = 0;
@@ -48,24 +50,14 @@ public class MainMenuPanel extends JPanel implements Observer{
         title.setHorizontalAlignment(SwingConstants.CENTER);
         inner.add(title, gbc);
 
-        // Statistiche
-        gbc.gridy = 1;
-        JPanel statsPanel = new JPanel(new GridLayout(3, 1, 5, 5));
-        statsPanel.add(nicknameLabel);
-        statsPanel.add(gamesLabel);
-        statsPanel.add(winsLabel);
-        inner.add(statsPanel, gbc);
-
         // Pulsante Nuova Partita
         gbc.gridy = 2;
         inner.add(startButton, gbc);
 
         // Pulsante Opzioni
-		optionsProfileButton.addActionListener(e -> showOptionPanel());
         gbc.gridy = 3;
         inner.add(optionsProfileButton, gbc);
 
-        // Selettore modalità di gioco
         gbc.gridy = 4;
         modeSelector = new JComboBox<>(new String[] { "2 Giocatori", "4 Giocatori" });
         inner.add(modeSelector, gbc);
@@ -73,35 +65,19 @@ public class MainMenuPanel extends JPanel implements Observer{
         add(inner);
 	}
 
-	
-	private void showOptionPanel() {
-		JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-		if (topFrame != null && topFrame.getGlassPane() instanceof ProfileOptionPanel optionPanel) {
-			optionPanel.setVisible(true);
-		}
+	//setter per i callback
+	public void setOnStart(Runnable r){
+		this.onStart = r;
 	}
 
-	private void hideOptionPanel() {
-		JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
-		if (topFrame != null && topFrame.getGlassPane() instanceof ProfileOptionPanel optionPanel) {
-			optionPanel.setVisible(false);
-		}
+	public void setOnToggleOption(Runnable r){
+		this.onToggleOption = r;
 	}
 
-    public JButton getStartButton() { return startButton; }
-    public JButton getOptionsButton() { return optionsProfileButton; }
-    public String getSelectedMode() { return (String) modeSelector.getSelectedItem(); }
+	/**
+	 * getter per il mainPanel
+	 * @return mainPanel
+	 */
+	public JPanel getMainPanel() {return this.mainPanel;}
 
-    @Override
-    public void update(Observable o, Object arg) {
-        if (o instanceof UserProfile) {
-            refreshFromProfile();
-        }
-    }
-
-    private void refreshFromProfile() {
-        nicknameLabel.setText("Nickname: " + profile.getNickname());
-        gamesLabel.setText("Partite giocate: " + profile.getGamesPlayed());
-        winsLabel.setText("Partite vinte: " + profile.getGamesWon());
-    }
 }
