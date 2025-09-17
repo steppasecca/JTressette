@@ -15,6 +15,7 @@ public class MainMenuController{
 
 		view.setOnStart(() -> appController.showGame());
 		view.setOnToggleOption(()-> appController.showOverlay("profile"));
+		view.setOnToggleStat(() -> appController.showStatPanel());
 	}
 
 	/**

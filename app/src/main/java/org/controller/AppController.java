@@ -17,6 +17,7 @@ public class AppController{
 	private final GameController gameController;
 	private final ProfileController profileController;
 	private final UserProfileService profileService;
+	private final StatController statController;
 
 	public  AppController(){
 
@@ -34,6 +35,9 @@ public class AppController{
 		//creo il controller dell profile option
 		profileController = new ProfileController(this,profileService.getUserProfile());
 		profileController.initProfile();
+
+		//creo lo statController
+		statController = new StatController(this,profileService.getUserProfile());
 
 		//mostro il menu principale
 		showMainMenu();
@@ -100,6 +104,14 @@ public class AppController{
 	public void saveProfile(){
 		profileService.saveProfile();
 	}
+
+	/**
+	 * metodo per mostrare lo statPanel
+	 */
+	public void showStatPanel(){
+		statController.showPanel();
+	}
+
 }
 
 

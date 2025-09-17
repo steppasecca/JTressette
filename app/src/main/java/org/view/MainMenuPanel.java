@@ -6,8 +6,6 @@ import java.awt.*;
 
 public class MainMenuPanel extends JPanel{
 
-	private String titolo = "JTressette";
-
 	//sotto-pannelli
 	private JPanel mainPanel;
 
@@ -23,7 +21,7 @@ public class MainMenuPanel extends JPanel{
 		super(new GridBagLayout());
 
 		//definisco i bottoni
-		JButton startButton = new JButton("Gicca!");
+		JButton startButton = new JButton("Gioca!");
 		JButton optionsProfileButton = new JButton("opzioni profilo");
 		JButton statButton = new JButton("statistiche di gioco");
 
