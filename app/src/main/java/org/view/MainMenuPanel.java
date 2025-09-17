@@ -17,6 +17,7 @@ public class MainMenuPanel extends JPanel{
 	//callback
 	private Runnable onStart;
 	private Runnable onToggleOption;
+	private Runnable onToggleStat;
 
 	public MainMenuPanel(){
 		super(new GridBagLayout());
@@ -24,6 +25,7 @@ public class MainMenuPanel extends JPanel{
 		//definisco i bottoni
 		JButton startButton = new JButton("Gicca!");
 		JButton optionsProfileButton = new JButton("opzioni profilo");
+		JButton statButton = new JButton("statistiche di gioco");
 
 		//aggiungo i callback per i bottoni
 		startButton.addActionListener(e-> {
@@ -32,6 +34,9 @@ public class MainMenuPanel extends JPanel{
 
 		optionsProfileButton.addActionListener( e-> {
 			if(onToggleOption!=null){onToggleOption.run();}
+		});
+		statButton.addActionListener(e -> {
+			if(onToggleStat!=null){onToggleStat.run();}
 		});
 		//layout principale
 		JPanel inner = new JPanel(new GridBagLayout());
@@ -56,7 +61,12 @@ public class MainMenuPanel extends JPanel{
         gbc.gridy = 3;
         inner.add(optionsProfileButton, gbc);
 
-        gbc.gridy = 4;
+		//pulsante stat
+		gbc.gridy = 4;
+		inner.add(statButton,gbc);
+
+		//selettore di modalità
+        gbc.gridy = 5;
         modeSelector = new JComboBox<>(new String[] { "2 Giocatori", "4 Giocatori" });
         inner.add(modeSelector, gbc);
 
@@ -70,6 +80,9 @@ public class MainMenuPanel extends JPanel{
 
 	public void setOnToggleOption(Runnable r){
 		this.onToggleOption = r;
+	}
+	public void setOnToggleStat(Runnable r){
+		this.onToggleStat = r;
 	}
 
 	/**

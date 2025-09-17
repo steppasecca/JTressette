@@ -14,7 +14,7 @@ public class MainMenuController{
 		this.view = new MainMenuPanel();
 
 		view.setOnStart(() -> appController.showGame());
-		view.setOnToggleOption(()-> appController.showOptionProfile());
+		view.setOnToggleOption(()-> appController.showOverlay("profile"));
 	}
 
 	/**

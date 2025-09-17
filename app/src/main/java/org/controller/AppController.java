@@ -2,6 +2,7 @@ package org.controller;
 
 import org.model.*;
 import org.view.*;
+import org.util.UserProfileService;
 import javax.swing.*;
 
 /**
@@ -10,10 +11,12 @@ import javax.swing.*;
  */
 public class AppController{
 
+	private OverlayPanel overlayPanel;
 	private JFrame mainFrame;
 	private final MainMenuController mainMenuController;
 	private final GameController gameController;
 	private final ProfileController profileController;
+	private final UserProfileService profileService;
 
 	public  AppController(){
 
@@ -26,8 +29,11 @@ public class AppController{
 		//creo il controller del gioco
 		gameController = new GameController(this);
 
+		//inizializzo il profilo
+		profileService = new UserProfileService();
 		//creo il controller dell profile option
-		profileController = new ProfileController(this);
+		profileController = new ProfileController(this,profileService.getUserProfile());
+		profileController.initProfile();
 
 		//mostro il menu principale
 		showMainMenu();
@@ -41,6 +47,10 @@ public class AppController{
 		this.mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.mainFrame.setLocationRelativeTo(null);
 		this.mainFrame.setVisible(true);
+
+		//overlayPanel per mostrare menu "popup"
+		overlayPanel = new OverlayPanel();
+        mainFrame.setGlassPane(overlayPanel);	
 	}
 
 	/**
@@ -60,28 +70,36 @@ public class AppController{
 	}
 
 	/**
-	 * metodo per mostrare il profileOptionPanel
+	 * metodo per aggiungere un panel all'overlayPanel
+	 *
+	 * @param name nome assegnato al componente grafico
+	 * @param comp componente grafico da mostrare
 	 */
-	public void showOptionProfile(){
-		mainFrame.setContentPane(profileController.getView());
-	}
+    public void registerOverlay(String name, JComponent comp) {
+        overlayPanel.addOverlay(name, comp);
+    }
 
 	/**
-     * Imposta un componente come GlassPane del frame principale.
-     * @param pane Il componente da usare come GlassPane.
-     */
-    public void setGlassPane(JComponent pane) {
-        mainFrame.setGlassPane(pane);
+	 * mostra l'overlayPanel
+	 * @param name nome del pannello da mostrare
+	 */
+    public void showOverlay(String name) {
+        overlayPanel.showOverlay(name);
     }
 
-    /**
-     * setta la visibilità del GlassPane.
-     * @param visible true per mostrarlo, false per nasconderlo.
-     */
-    public void toggleGlassPane(boolean visible) {
-        mainFrame.getGlassPane().setVisible(visible);
+	/**
+	 * nasconde il panel
+	 */
+    public void hideOverlay() {
+        overlayPanel.hideOverlay();
     }
 	
+	/**
+	 * salva il profilo
+	 */
+	public void saveProfile(){
+		profileService.saveProfile();
+	}
 }
 
 

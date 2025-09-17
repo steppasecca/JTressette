@@ -16,9 +16,9 @@ public class GameController{
 		this.appController = appController;
 		this.view = new GamePanel();
 
-		//creo e imposto il PauseMenuPanel come GlassPane
+		//creo e registro il PausMenuPanel
 		this.pauseMenuPanel = new PauseMenuPanel();
-		appController.setGlassPane(pauseMenuPanel);
+		appController.registerOverlay("pause", pauseMenuPanel);
 
 		//setto i callback per i bottoni del pauseMenu
 		setPausePanelCallback();
@@ -41,7 +41,7 @@ public class GameController{
 	 */
 	private void setPausePanelCallback(){
 
-		pauseMenuPanel.setOnResume(() -> appController.toggleGlassPane(false);
+		pauseMenuPanel.setOnResume(() -> appController.hideOverlay());
 		pauseMenuPanel.setOnToggleMusic(null);
 		pauseMenuPanel.setOnReturnToMenu(()->appController.showMainMenu());
 	}
