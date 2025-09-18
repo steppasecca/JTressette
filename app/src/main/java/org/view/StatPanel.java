@@ -4,55 +4,88 @@ import javax.swing.*;
 import org.model.UserProfile;
 import java.awt.*;
 
-public class StatPanel extends JPanel{
+public class StatPanel extends JPanel {
 
-	private JLabel nicknameLabel;
-	private JLabel gamesWonLabel;
-	private JLabel gamesPlayedLabel;
-	private JLabel gamesLostLabel;
+    private JLabel nicknameLabel;
+    private JLabel gamesWonLabel;
+    private JLabel gamesPlayedLabel;
+    private JLabel gamesLostLabel;
 
-	private Runnable onExit;
-	private JButton exitButton;
+    private Runnable onExit;
+    private JButton exitButton;
 
-	public StatPanel(){
+    public StatPanel() {
+        setLayout(new GridBagLayout());
+        setOpaque(false);
+
         // Inizializza le etichette
         nicknameLabel = new JLabel();
         gamesWonLabel = new JLabel();
         gamesPlayedLabel = new JLabel();
         gamesLostLabel = new JLabel();
-		exitButton = new JButton();
+        exitButton = new JButton("Esci");
 
-		//bottone per uscire con listener che collega a callback
-		exitButton.addActionListener(e ->{
-		   if(onExit!=null)onExit.run();
-		});
+        // Bottone per uscire con listener che collega a callback
+        exitButton.addActionListener(e -> {
+            if (onExit != null) onExit.run();
+        });
 
-		initPanel();
-	}
+        initPanel();
+    }
 
-	private void initPanel(){
-        // Usa un layout per organizzare le etichette
-        setLayout(new GridLayout(4, 2, 10, 5));
-        setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(Color.DARK_GRAY, 2),
-            BorderFactory.createEmptyBorder(15, 15, 15, 15)
-        ));
-        setBackground(new Color(240, 240, 240));
+    private void initPanel() {
+        // Pannello centrale con sfondo semi-trasparente (simile a PauseMenuPanel)
+        JPanel box = new JPanel(new GridLayout(9, 1, 10, 10));
+        box.setBackground(new Color(0, 0, 0, 180)); // nero semi-trasparente
+        box.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        // Titolo
+        JLabel titleLabel = new JLabel("Statistiche", SwingConstants.CENTER);
+        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 16f));
+        titleLabel.setForeground(Color.WHITE);
+        box.add(titleLabel);
+
         // Aggiungi le etichette al pannello
-        add(new JLabel("Nickname:"));
-        add(nicknameLabel);
-        add(new JLabel("Partite Giocate:"));
-        add(gamesPlayedLabel);
-        add(new JLabel("Partite Vinte:"));
-        add(gamesWonLabel);
-        add(new JLabel("Partite Perse:"));
-        add(gamesLostLabel);
-		add(exitButton);
-	}
+        JLabel nicknameDescLabel = new JLabel("Nickname:", SwingConstants.CENTER);
+        nicknameDescLabel.setForeground(Color.WHITE);
+        box.add(nicknameDescLabel);
+        
+        nicknameLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        nicknameLabel.setForeground(Color.WHITE);
+        box.add(nicknameLabel);
 
-	public void setOnExit(Runnable r){
-		this.onExit = r;
-	}
+        JLabel gamesPlayedDescLabel = new JLabel("Partite Giocate:", SwingConstants.CENTER);
+        gamesPlayedDescLabel.setForeground(Color.WHITE);
+        box.add(gamesPlayedDescLabel);
+        
+        gamesPlayedLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        gamesPlayedLabel.setForeground(Color.WHITE);
+        box.add(gamesPlayedLabel);
+
+        JLabel gamesWonDescLabel = new JLabel("Partite Vinte:", SwingConstants.CENTER);
+        gamesWonDescLabel.setForeground(Color.WHITE);
+        box.add(gamesWonDescLabel);
+        
+        gamesWonLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        gamesWonLabel.setForeground(Color.WHITE);
+        box.add(gamesWonLabel);
+
+        JLabel gamesLostDescLabel = new JLabel("Partite Perse:", SwingConstants.CENTER);
+        gamesLostDescLabel.setForeground(Color.WHITE);
+        box.add(gamesLostDescLabel);
+        
+        gamesLostLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        gamesLostLabel.setForeground(Color.WHITE);
+        box.add(gamesLostLabel);
+
+        box.add(exitButton);
+
+        add(box, new GridBagConstraints());
+    }
+
+    public void setOnExit(Runnable r) {
+        this.onExit = r;
+    }
 
     /**
      * Metodo pubblico per aggiornare le etichette 
@@ -68,4 +101,14 @@ public class StatPanel extends JPanel{
         }
     }
 
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        // Disegna l'effetto velato sullo sfondo (identico a PauseMenuPanel)
+        Graphics2D g2d = (Graphics2D) g.create();
+        g2d.setColor(new Color(0, 0, 0, 120));
+        g2d.fillRect(0, 0, getWidth(), getHeight());
+        g2d.dispose();
+    }
 }

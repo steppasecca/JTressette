@@ -45,7 +45,6 @@ public class MainMenuPanel extends JPanel{
 
 
 		// Titolo
-        gbc.gridx = 0; gbc.gridy = 0;
         JLabel title = new JLabel("JTressette");
         title.setFont(title.getFont().deriveFont(Font.BOLD, 35f));
         title.setHorizontalAlignment(SwingConstants.CENTER);
