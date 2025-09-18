@@ -4,6 +4,9 @@ import org.model.*;
 import org.view.*;
 import javax.swing.*;
 
+/**
+ * controller che coordina e gestisce quello che riguarda il menu iniziale
+ */
 public class MainMenuController{
 
 	private AppController appController;

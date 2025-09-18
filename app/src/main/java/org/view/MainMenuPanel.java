@@ -4,6 +4,9 @@ import javax.swing.*;
 import java.awt.*;
 
 
+/**
+ * classe che mostra il menu principale
+ */
 public class MainMenuPanel extends JPanel{
 
 	//sotto-pannelli

@@ -3,7 +3,9 @@ package org.controller;
 import org.view.GamePanel;
 import org.view.PauseMenuPanel;
 import org.model.TressetteGame;
-
+/**
+ * controller che coordina e gestisce TressetteGame(model) e GamePanel(view)
+ */
 public class GameController{
 
 	private AppController appController;

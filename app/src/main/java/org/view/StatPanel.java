@@ -4,6 +4,9 @@ import javax.swing.*;
 import org.model.UserProfile;
 import java.awt.*;
 
+/**
+ * pannello delle statistiche
+ */
 public class StatPanel extends JPanel {
 
 	private JLabel nicknameLabel;
@@ -33,6 +36,9 @@ public class StatPanel extends JPanel {
 		initPanel();
 	}
 
+	/**
+	 * metodo di utilità che Inizializza il pannello
+	 */
 	private void initPanel() {
 		JPanel box = new JPanel(new GridLayout(6, 1, 10, 10));
 		box.setBackground(new Color(0, 0, 0, 180)); 
@@ -70,6 +76,9 @@ public class StatPanel extends JPanel {
 		add(box, new GridBagConstraints());
 	}
 
+	/**
+	 * aggiorna le statistiche dal modello
+	 */
 	public void updateStats(UserProfile profile) {
 		if (profile != null) {
 			nicknameLabel.setText("Nickname: " + profile.getNickname());
@@ -80,6 +89,7 @@ public class StatPanel extends JPanel {
 		}
 	}
 
+	//setter per il controller del callback
 	public void setOnExit(Runnable r) {
 		this.onExit = r;
 	}

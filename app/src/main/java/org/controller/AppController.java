@@ -1,17 +1,16 @@
 package org.controller;
 
-import org.model.*;
 import org.view.*;
 import org.util.UserProfileService;
 import javax.swing.*;
 
 /**
- * classe che gestisce e organizza i vari controller e le varie view
+ * classe che gestisce organizza e coordina i vari controller e le varie view
  * @author steppasecca
  */
 public class AppController{
 
-	private OverlayPanel overlayPanel;
+	private OverlayPanel overlayPanel; 
 	private JFrame mainFrame;
 	private final MainMenuController mainMenuController;
 	private final GameController gameController;

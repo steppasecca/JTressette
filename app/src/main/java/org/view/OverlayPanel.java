@@ -4,6 +4,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
+/**
+ * classe di utilità per gestire i pannelli "popup" in primo piano 
+ */
 public class OverlayPanel extends JPanel {
     private final CardLayout layout;
 

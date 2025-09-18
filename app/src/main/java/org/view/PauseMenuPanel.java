@@ -6,6 +6,9 @@ import java.awt.*;
 import  org.util.AudioManager;
 
 
+/**
+ * panel che mostra un menu in primo piano di opzioni durante una partita
+ */
 public class PauseMenuPanel extends JPanel{
 
 	private Runnable onResume;

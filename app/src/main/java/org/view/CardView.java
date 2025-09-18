@@ -6,6 +6,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
+/**
+ * classe che mostra l'immagine della carta 
+ *
+ * @author steppasecca
+ */
 public class CardView extends JComponent {
     private static final long serialVersionUID = 1L; //evita InvalidClassException
     private Card card;

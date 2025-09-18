@@ -3,6 +3,9 @@ package org.controller;
 import org.model.UserProfile;
 import org.view.StatPanel;
 
+/**
+ * controller del pannello StatPanel
+ */
 public class StatController {
 
     private final AppController appController;

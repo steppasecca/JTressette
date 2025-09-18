@@ -1,4 +1,4 @@
-//TODO controllare bene la classe se si può rimuovere qualcosa
+//TODO trasferire la logica per il caricamento dell'immagine etc. in una classe AvatarService(da valutare)
 //e se viola MVC
 package org.view;
 
@@ -90,11 +90,6 @@ public class ProfileMenuPanel extends JPanel {
         gbc.fill = GridBagConstraints.BOTH;
         contentPanel.add(new JScrollPane(avatarGallery), gbc);
 
-        // Statistiche
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        JPanel statsPanel = createStatsPanel();
-        contentPanel.add(statsPanel, gbc);
-
         // Pulsanti
         JPanel buttonPanel = new JPanel(new FlowLayout());
         buttonPanel.setOpaque(false);
@@ -119,6 +114,9 @@ public class ProfileMenuPanel extends JPanel {
         add(contentPanel, new GridBagConstraints());
     }
 
+	/**
+	 * metodo che crea un pannello per contenere le immagini degli avatar
+	 */
     private void createAvatarGallery() {
         avatarGallery = new JPanel(new GridLayout(2, 4, AVATAR_PADDING, AVATAR_PADDING));
         avatarGallery.setBackground(Color.WHITE);
@@ -133,6 +131,10 @@ public class ProfileMenuPanel extends JPanel {
         }
     }
 
+	/**
+	 * metodo che carica assegna l'immagine di un avgatar ad una label e la ritorna
+	 * @return label
+	 */
     private JLabel createAvatarLabel(String avatarFile) {
         JLabel label = new JLabel();
         label.setPreferredSize(new Dimension(AVATAR_SIZE, AVATAR_SIZE));
@@ -165,6 +167,9 @@ public class ProfileMenuPanel extends JPanel {
         return label;
     }
 
+	/**
+	 * metodo carica l'immagine dell'avatar e la ritorna
+	 */
     private BufferedImage loadAvatarImage(String filename) {
         String path = "/images/avatar/" + filename;
         try (InputStream is = getClass().getResourceAsStream(path)) {
@@ -181,6 +186,9 @@ public class ProfileMenuPanel extends JPanel {
         }
     }
 
+	/**
+	 * salva la selezione dell'avat fatta dall'utente e la mostra graficamente
+	 */
     private void selectAvatar(String avatarFile) {
         selectedAvatarPath = avatarFile;
         for (Component comp : avatarGallery.getComponents()) {
@@ -192,6 +200,11 @@ public class ProfileMenuPanel extends JPanel {
         }
     }
 
+	/**
+	 * evidenzia il bordo dell'avatar selezionato
+	 * @param label etichetta dell'avatar
+	 * @param String = nome dell'avatar
+	 */
     private void updateAvatarSelection(JLabel label, String avatarFile) {
         if (avatarFile.equals(selectedAvatarPath)) {
             label.setBorder(BorderFactory.createLineBorder(Color.GREEN, 3));
@@ -200,6 +213,11 @@ public class ProfileMenuPanel extends JPanel {
         }
     }
 
+	/**
+	 * torna la stringa che rappresenta l'avatar da un'etichetta
+	 * @param label
+	 * @return string nome del'avatar file
+	 */
     private String findAvatarFileForLabel(JLabel label) {
         Component[] components = avatarGallery.getComponents();
         for (int i = 0; i < components.length && i < AVATAR_FILES.length; i++) {
@@ -210,20 +228,7 @@ public class ProfileMenuPanel extends JPanel {
         return "";
     }
 
-    private JPanel createStatsPanel() {
-        JPanel statsPanel = new JPanel(new GridLayout(2, 2, 10, 5));
-        statsPanel.setOpaque(false);
-        statsPanel.setBorder(BorderFactory.createTitledBorder("Statistiche"));
-
-        statsPanel.add(new JLabel("Partite giocate:"));
-        statsPanel.add(new JLabel(String.valueOf(profile.getGamesPlayed())));
-        statsPanel.add(new JLabel("Partite vinte:"));
-        statsPanel.add(new JLabel(String.valueOf(profile.getGamesWon())));
-
-        return statsPanel;
-    }
-
-    // --- Metodi per il Controller ---
+	//metodi getter per il controller
     public String getNicknameInput() {
         return nicknameField.getText().trim();
     }
@@ -232,6 +237,7 @@ public class ProfileMenuPanel extends JPanel {
         return selectedAvatarPath;
     }
 
+	//setter dei callback per il controller
     public void setOnSave(Runnable callback) {
         this.onSave = callback;
     }

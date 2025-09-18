@@ -4,6 +4,9 @@ import javax.swing.*;
 import java.util.Observer;
 import java.util.Observable;
 
+/**
+ * classe che mostra il gioco del tressette 
+ */
 public class GamePanel extends JPanel implements Observer{
 
 	private TablePanel tablePanel;

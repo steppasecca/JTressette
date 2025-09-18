@@ -3,6 +3,9 @@ package org.view;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * classe che mostra uno slot per le carte da gioco con realtiva immagine
+ */
 public class CardSlot extends JPanel{
 
 	private JLabel nameLabel;
