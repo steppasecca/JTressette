@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Optional;
+import javax.swing.Timer;
 
 import org.util.*;
 
@@ -137,19 +138,34 @@ public class TressetteGame extends AbstractGame{
 	 * @return void
 	 */
     @Override
-    public void nextTurn() {
-        if (currentTrick.size() < players.size()) {
-            
-            // Sposta il turno al prossimo giocatore
-            currentPlayer = players.get((getPlayerIndex(currentPlayer) + 1) % players.size());
+	public void nextTurn() {
+		if (currentTrick.size() < players.size()) {
 
-            setChanged();
-            notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TURN_STARTED, getPlayerIndex(currentPlayer)));
-        } else {
-            // La presa è finita, determina il vincitore
-            endTrick();
-        }
-    }
+			// Sposta il turno al prossimo giocatore
+			currentPlayer = players.get((getPlayerIndex(currentPlayer) + 1) % players.size());
+
+			setChanged();
+			notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TURN_STARTED, getPlayerIndex(currentPlayer)));
+
+			// AGGIUNGERE QUESTA SEZIONE:
+			// Se è il turno di un AI, fallo giocare automaticamente dopo un piccolo delay
+			if (currentPlayer instanceof ArtificialPlayer) {
+				Timer aiTimer = new Timer(1500, e -> {
+					ArtificialPlayer aiPlayer = (ArtificialPlayer) currentPlayer;
+					Card cardToPlay = aiPlayer.chooseCardToPlay(currentTrick);
+					if (cardToPlay != null) {
+						Play aiPlay = new Play(aiPlayer, cardToPlay);
+						playCard(aiPlay);
+					}
+				});
+				aiTimer.setRepeats(false);
+				aiTimer.start();
+			}
+		} else {
+			// La presa è finita, determina il vincitore
+			endTrick();
+		}
+	}
 
     /**
      * Termina la presa, determina il vincitore e assegna le carte.

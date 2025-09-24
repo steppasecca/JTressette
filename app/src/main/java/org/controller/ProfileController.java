@@ -39,4 +39,6 @@ public class ProfileController{
 
 	public ProfileMenuPanel getView(){return view;}
 
+	public UserProfile getProfile(){return this.profile;}
+
 }

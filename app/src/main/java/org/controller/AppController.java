@@ -1,7 +1,8 @@
 package org.controller;
 
 import org.view.*;
-import org.util.UserProfileService;
+import org.model.*;
+import org.util.*;
 import javax.swing.*;
 
 /**
@@ -17,6 +18,7 @@ public class AppController{
 	private final ProfileController profileController;
 	private final UserProfileService profileService;
 	private final StatController statController;
+	private TressetteGame game;
 
 	public  AppController(){
 
@@ -25,6 +27,8 @@ public class AppController{
 
 		//creo il controller del menu principale
 		mainMenuController = new MainMenuController(this);
+
+		//creo il model del gioco
 
 		//creo il controller del gioco
 		gameController = new GameController(this);
@@ -70,6 +74,20 @@ public class AppController{
 	 */
 	public void showGame(){
 		mainFrame.setContentPane(gameController.getView());
+	}
+
+	public void initGame() {
+		String mode = mainMenuController.getSelectedMode();
+		GameModeStrategy strategy;
+		if ("2 Giocatori".equals(mode)) {
+			strategy = new TwoPlayerStrategy();
+		} else {
+			strategy = new FourPlayerStrategy();
+		}
+		gameController.setGame(new TressetteGame(strategy, profileController.getProfile()));
+		gameController.initView();
+		gameController.startGame();
+		showGame();
 	}
 
 	/**

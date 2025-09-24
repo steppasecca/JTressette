@@ -2,7 +2,7 @@ package org.controller;
 
 import org.view.GamePanel;
 import org.view.PauseMenuPanel;
-import org.model.TressetteGame;
+import org.model.*;
 /**
  * controller che coordina e gestisce TressetteGame(model) e GamePanel(view)
  */
@@ -48,4 +48,36 @@ public class GameController{
 		pauseMenuPanel.setOnReturnToMenu(()->appController.showMainMenu());
 	}
 
+	public void setGame(TressetteGame game){
+		if(game != null){
+			this.model = game;
+		}
+	}
+
+	public void initView(){
+		if(model!=null){
+			view.initGP(model.getPlayers());
+
+			// AGGIUNGERE QUESTE LINEE:
+			model.addObserver(view);
+
+			// Configura il listener per le carte del giocatore umano
+			view.setCardClickListener(card -> {
+				Player humanPlayer = model.getPlayers().stream()
+					.filter(p -> p instanceof HumanPlayer)
+					.findFirst()
+					.orElse(null);
+
+				if (humanPlayer != null && model.getCurrentPlayer().equals(humanPlayer)) {
+					Play play = new Play(humanPlayer, card);
+					model.playCard(play);
+				}
+			});
+		}
+	}
+	public void startGame() {
+		if (model != null) {
+			model.startGame();
+		}
+	}
 }

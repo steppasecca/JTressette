@@ -16,7 +16,7 @@ public class MainMenuController{
 		this.appController = appController;
 		this.view = new MainMenuPanel();
 
-		view.setOnStart(() -> appController.showGame());
+		view.setOnStart(() -> appController.initGame());
 		view.setOnToggleOption(()-> appController.showOverlay("profile"));
 		view.setOnToggleStat(() -> appController.showStatPanel());
 	}
@@ -28,5 +28,8 @@ public class MainMenuController{
 		return view;
 	}
 
+	public String getSelectedMode() {
+		return view.getSelectedMode();
+	}
 
 }

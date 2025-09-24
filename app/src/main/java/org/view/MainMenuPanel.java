@@ -91,4 +91,8 @@ public class MainMenuPanel extends JPanel{
 	 */
 	public JPanel getMainPanel() {return this.mainPanel;}
 
+	public String getSelectedMode() {
+		return (String) modeSelector.getSelectedItem();
+	}
 }
+

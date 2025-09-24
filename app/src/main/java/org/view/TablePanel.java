@@ -120,6 +120,12 @@ public class TablePanel extends JPanel {
 		});
 	}	
 
+	public void clearTablePanel(){
+		for(CardSlot slot:slots){
+			slot.setLastPlayedCard(null);
+			}
+	}
+
 
 }
 
