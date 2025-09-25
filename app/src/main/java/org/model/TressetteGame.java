@@ -179,7 +179,7 @@ public class TressetteGame extends AbstractGame{
 			winner.getTeam().addTrick(currentTrick);
 			this.currentPlayer = winner;
 		}
-		Object[] payload = new Object[]{winner, plays};
+		Object[] payload = new Object[]{winner, plays,players};
 		setChanged();
 		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TRICK_ENDED, payload));
 

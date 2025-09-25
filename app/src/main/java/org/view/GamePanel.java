@@ -5,6 +5,7 @@ import java.awt.*;
 import java.util.Observer;
 import java.util.Observable;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Collections;
 import org.model.*;
 import org.util.*;
@@ -146,26 +147,27 @@ public class GamePanel extends JPanel implements Observer{
         }
     }
 
+	private void handleTrickStarted(Object payload){
+		if (payload instanceof Integer idx){
+			setCurrentPlayer(idx);
+		} else {
+			System.err.println("errore payload non valido");
+		}
+	}
+
 	private void handleTrickEnded(Object payload){
-		Player winner = null;
 		List<Play> plays = Collections.emptyList();
-		List<Player> players = Collections.emptyList();
+		List<Player> players = new ArrayList<>();
 
 		// gestisce il nuovo payload Object[] {winner, playsSnapshot}
 		if (payload instanceof Object[]) {
 			Object[] arr = (Object[]) payload;
-			if (arr.length >= 1 && arr[0] instanceof Player) {
-				winner = (Player) arr[0];
-			}
-			if (arr.length >= 2 && arr[1] instanceof List) {
+			if (arr.length >= 1 && arr[0] instanceof List) {
 				plays = (List<Play>) arr[1];
 				for(Play play: plays){
 					players.add(play.getPlayer());
 				}
-
 			}
-		} else if (payload instanceof Player) { //else if di sicurezza se si torna un payload con solo i player
-			winner = (Player) payload;
 		}
 
 		// mostra subito le carte della mano (snapshot)
@@ -173,7 +175,7 @@ public class GamePanel extends JPanel implements Observer{
 		updateTable(plays, players);
 
 		// tienile a video per 1 secondo, poi pulisci e lascia partire il nuovo turno
-		new javax.swing.Timer(2000, e -> {
+		new javax.swing.Timer(1000, e -> {
 			((javax.swing.Timer) e.getSource()).stop();
 			updateTable(Collections.emptyList(), players);
 		}) {{

@@ -95,7 +95,7 @@ public class TablePanel extends JPanel {
 	 */
 	public void playAnimatedCard(int playeridx, Card card){
 
-		if(playeridx < 0 || playeridx>slotCount) return;
+		if(playeridx < 0 || playeridx>=slotCount) return;
 
 		CardSlot slotToMove = slots.get(playeridx);
 
@@ -123,6 +123,7 @@ public class TablePanel extends JPanel {
 	public void clearTablePanel(){
 		for(CardSlot slot:slots){
 			slot.setLastPlayedCard(null);
+			slot.setHighlighted(false);
 			}
 	}
 

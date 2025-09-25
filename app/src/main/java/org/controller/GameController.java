@@ -21,7 +21,6 @@ public class GameController{
 		//creo e registro il PausMenuPanel
 		this.pauseMenuPanel = new PauseMenuPanel();
 		appController.registerOverlay("pause", pauseMenuPanel);
-
 		//setto i callback per i bottoni del pauseMenu
 		setPausePanelCallback();
 	}
@@ -45,8 +44,12 @@ public class GameController{
 
 		pauseMenuPanel.setOnResume(() -> appController.hideOverlay());
 		pauseMenuPanel.setOnToggleMusic(null);
-		pauseMenuPanel.setOnReturnToMenu(()->appController.showMainMenu());
+		pauseMenuPanel.setOnReturnToMenu(()->{
+			appController.hideOverlay();
+			appController.showMainMenu();
+		});
 	}
+
 
 	public void setGame(TressetteGame game){
 		if(game != null){
@@ -57,9 +60,6 @@ public class GameController{
 	public void initView(){
 		if(model!=null){
 			view.initGP(model.getPlayers());
-
-			// AGGIUNGERE QUESTE LINEE:
-			model.addObserver(view);
 
 			// Configura il listener per le carte del giocatore umano
 			view.setCardClickListener(card -> {
@@ -73,7 +73,10 @@ public class GameController{
 					model.playCard(play);
 				}
 			});
+			model.addObserver(view);
 		}
+
+		view.setOnPause(()->appController.showOverlay("pause"));
 	}
 	public void startGame() {
 		if (model != null) {
