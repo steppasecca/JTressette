@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
  * Contiene la logica per decidere quale carta giocare.
  */
 public class ArtificialPlayer extends Player {
+	
+	boolean isThinking; //flag per il controllo della sincronia all'interno della logica di gioco
 
 	public ArtificialPlayer(String name) {
 		super(name);
@@ -76,5 +78,13 @@ public class ArtificialPlayer extends Player {
 		// 3) Non hai il seme richiesto: scarta (meglio una carta senza punti, altrimenti la più bassa)
 		Card np = lowestNoPointsOverall.get();
 		return (np != null) ? np : lowestOverall.get();
+	}
+
+	public void setIsThinking(boolean isThinking){
+		this.isThinking = isThinking;
+	}
+
+	public boolean isThinking(){
+		return this.isThinking;
 	}
 }

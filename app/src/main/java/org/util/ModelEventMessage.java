@@ -38,5 +38,6 @@ public class ModelEventMessage {
 		GAME_OVER,
 		PROFILE_CHANGED,
 		GAME_STATE_UPDATE,
+		HAND_UPDATE
 	}
 }

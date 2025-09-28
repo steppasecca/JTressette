@@ -35,7 +35,7 @@ public abstract class AbstractGame extends Observable{
     /**
      * Metodo astratto per gestire la logica di un singolo turno.
      */
-    public abstract void nextTurn();
+    public abstract void nextTurn(boolean isStartPlayer);
 
     /**
      * Metodo astratto per verificare se una smazzata è terminata.

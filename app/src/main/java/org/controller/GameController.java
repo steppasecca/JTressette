@@ -70,7 +70,9 @@ public class GameController{
 
 				if (humanPlayer != null && model.getCurrentPlayer().equals(humanPlayer)) {
 					Play play = new Play(humanPlayer, card);
-					model.playCard(play);
+					if(model.isValidPlay(play)){
+						model.playCard(play);
+					}
 				}
 			});
 			model.addObserver(view);

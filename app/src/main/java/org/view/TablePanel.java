@@ -93,15 +93,16 @@ public class TablePanel extends JPanel {
 	 * @param player la giocatrice che ha giocato
 	 * @param card la carta giocata
 	 */
-	public void playAnimatedCard(int playeridx, Card card){
+	public void playAnimatedCard(int playeridx, Card card,Runnable onComplete){
 
 		if(playeridx < 0 || playeridx>=slotCount) return;
 
 		CardSlot slotToMove = slots.get(playeridx);
 
 		if(slotToMove == null) return;
-		int startX = slotToMove.getX();
-		int startY = slotToMove.getY();
+		Point initSlotPos = SwingUtilities.convertPoint(slotToMove,0,0,this);
+		int startX = initSlotPos.x;
+		int startY = initSlotPos.y;
 
 		int targetX = getWidth()/2;
 		int targetY = getHeight()/2;
@@ -111,12 +112,21 @@ public class TablePanel extends JPanel {
 		add(animatedCard);
 		setComponentZOrder(animatedCard, 0); // portala davanti
 		repaint();
+		
+		//DEBUG 
+		System.out.println("[PLAY_ANIM] playerIdx=" + playeridx + " slotPos=(" + startX + "," + startY + ") target=(" + targetX + "," + targetY + ")");
 
 		animatedCard.animateTo(startX, startY, targetX, targetY, () -> {
 			remove(animatedCard);
+			revalidate();
 			repaint();
 
 			slotToMove.setLastPlayedCard(card);
+
+			if(onComplete != null){
+				onComplete.run();
+			}
+
 		});
 	}	
 

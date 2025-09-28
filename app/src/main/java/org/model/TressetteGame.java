@@ -7,7 +7,8 @@ import java.util.HashMap;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Optional;
-import javax.swing.Timer;
+
+import javax.swing.SwingUtilities;
 
 import org.util.*;
 
@@ -19,29 +20,29 @@ public class TressetteGame extends AbstractGame{
 	private final int teamsCount = 2; //quantità di squadre in una partita del tressette
 
 	/**
-     * Costruttore che accetta una strategia per la modalità di gioco e un profilo utente.
-     * @param gameMode La strategia per la configurazione dei giocatori e delle squadre.
+	 * Costruttore che accetta una strategia per la modalità di gioco e un profilo utente.
+	 * @param gameMode La strategia per la configurazione dei giocatori e delle squadre.
 	 * @param userProfile
-     */
-    public TressetteGame(GameModeStrategy gameMode,UserProfile userProfile) {
-        super();
-        this.gameMode = gameMode;
+	 */
+	public TressetteGame(GameModeStrategy gameMode,UserProfile userProfile) {
+		super();
+		this.gameMode = gameMode;
 		this.userProfile = userProfile;
-        setupGame(userProfile);
-    }
-    public TressetteGame(GameModeStrategy gameMode) {
-        super();
-        this.gameMode = gameMode;
+		setupGame(userProfile);
+	}
+	public TressetteGame(GameModeStrategy gameMode) {
+		super();
+		this.gameMode = gameMode;
 		this.userProfile = null;
-        setupGame(this.userProfile);
-    }
+		setupGame(this.userProfile);
+	}
 	/**
-     * Metodo di configurazione che utilizza la strategia per inizializzare giocatori e squadre.
+	 * Metodo di configurazione che utilizza la strategia per inizializzare giocatori e squadre.
 	 * @param userProfile
 	 * @return void
-     */
-    private void setupGame(UserProfile profile) {
-        this.teams = new ArrayList<>();
+	 */
+	private void setupGame(UserProfile profile) {
+		this.teams = new ArrayList<>();
 		this.players = new ArrayList<>();
 		this.players.clear();
 
@@ -50,24 +51,24 @@ public class TressetteGame extends AbstractGame{
 
 		for(int t = 0;t<teamsCount;t++){
 			Team team = new Team("squadra " + (t+1));
-			
+
 			for(int p = 0;p<playersPerTeam;p++){
 				Player newPlayer;
 				// riserva il primo slot al giocatore umano (se presente)
-                boolean isHumanSlot = (t == 0 && p == 0) && profile != null;
-                if (isHumanSlot) {
-                    String nick = profile!=null && profile.getNickname() != null && !profile.getNickname().isBlank()
-                            ? profile.getNickname() : "HumanPlayer";
-                    newPlayer = new HumanPlayer(nick);
-                } else {
-                    newPlayer = new ArtificialPlayer("ArtificialPlayer " + (aiCounter++));
-                }
-                newPlayer.setTeam(team);
-                // aggiungi alla lista globale di giocatori
-                this.players.add(newPlayer);
-            }
-            this.teams.add(team);
-        }
+				boolean isHumanSlot = (t == 0 && p == 0) && profile != null;
+				if (isHumanSlot) {
+					String nick = profile!=null && profile.getNickname() != null && !profile.getNickname().isBlank()
+						? profile.getNickname() : "HumanPlayer";
+					newPlayer = new HumanPlayer(nick);
+				} else {
+					newPlayer = new ArtificialPlayer("ArtificialPlayer " + (aiCounter++));
+				}
+				newPlayer.setTeam(team);
+				// aggiungi alla lista globale di giocatori
+				this.players.add(newPlayer);
+			}
+			this.teams.add(team);
+		}
 
 	}
 
@@ -95,71 +96,87 @@ public class TressetteGame extends AbstractGame{
 	protected void dealCards(){
 		gameMode.dealInitialCards(players, deck);
 		Player human = players.stream()
-				.filter(p -> p instanceof HumanPlayer)
-				.findFirst()
-				.orElse(null);
+			.filter(p -> p instanceof HumanPlayer)
+			.findFirst()
+			.orElse(null);
 
-			List<Card> humanHand = (human != null) ? human.getHand().getCards() : Collections.emptyList();
-			
-			setChanged();
-			notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.CARDS_DEALT, humanHand));
+		List<Card> humanHand = (human != null) ? human.getHand().getCards() : Collections.emptyList();
+
+		setChanged();
+		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.CARDS_DEALT, humanHand));
 	}
 
 
-    /**
-     * Avvia una nuova partita: mischia il mazzo e distribuisce le carte.
-     */
-    public void startGame() {
+	/**
+	 * Avvia una nuova partita: mischia il mazzo e distribuisce le carte.
+	 */
+	public void startGame() {
 		startPlayer = players.get((int)(Math.random() * players.size()));
 		startRound();
 		notifyInitialState();
-    }
+	}
 
-    /**
-     * Avvia una nuova smazzata: mischia il mazzo e distribuisce le carte.
-     */
-    public void startRound() {
-        this.deck = new Deck(); // Crea un nuovo mazzo round
-        this.deck.shuffle();
-        this.dealCards();
-        this.currentTrick = new Trick();
-        this.currentPlayer = startPlayer;
+	/**
+	 * Avvia una nuova smazzata: mischia il mazzo e distribuisce le carte.
+	 */
+	public void startRound() {
+		this.deck = new Deck(); // Crea un nuovo mazzo round
+		this.deck.shuffle();
+		this.dealCards();
+		this.currentTrick = new Trick();
+		this.currentPlayer = startPlayer;
 		for(Player player: players){
 			player.getHand().sort();
 		} //ordina le carte delle giocatrici
-        
-        // La View deve aggiornare lo stato di gioco dopo l'avvio della smazzata
-        setChanged();
-        notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.ROUND_STARTED,null));
-    }
-    
+		// La View deve aggiornare lo stato di gioco dopo l'avvio della smazzata
+		setChanged();
+		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.ROUND_STARTED,null));
+		nextTurn(true);
+	}
+
 	/**
 	 * gestisceil passaggio al prossimo turno
 	 * @return void
 	 */
-    @Override
-	public void nextTurn() {
+	@Override
+	public void nextTurn(boolean isStartPlayer) {
 		if (currentTrick.size() < players.size()) {
 
 			// Sposta il turno al prossimo giocatore
-			currentPlayer = players.get((getPlayerIndex(currentPlayer) + 1) % players.size());
+			if(!isStartPlayer){
+				currentPlayer = players.get((getPlayerIndex(currentPlayer) + 1) % players.size());
+			}
 
 			setChanged();
 			notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TURN_STARTED, getPlayerIndex(currentPlayer)));
 
-			// AGGIUNGERE QUESTA SEZIONE:
-			// Se è il turno di un AI, fallo giocare automaticamente dopo un piccolo delay
 			if (currentPlayer instanceof ArtificialPlayer) {
-				Timer aiTimer = new Timer(1500, e -> {
-					ArtificialPlayer aiPlayer = (ArtificialPlayer) currentPlayer;
-					Card cardToPlay = aiPlayer.chooseCardToPlay(currentTrick);
-					if (cardToPlay != null) {
-						Play aiPlay = new Play(aiPlayer, cardToPlay);
-						playCard(aiPlay);
+				ArtificialPlayer aiPlayer = (ArtificialPlayer) currentPlayer;
+
+				// Evita di schedulare più volte (puoi mantenere questa flag sul Player o altrove)
+				if (aiPlayer.isThinking()) {
+					return;
+				}
+				aiPlayer.setIsThinking(true);
+
+				javax.swing.Timer thinkTimer = new javax.swing.Timer(1000,e->{
+					try {
+						// Verifica che sia ancora il turno di questa IA e che il trick richieda una mossa
+						if (currentPlayer != aiPlayer) return;
+						if (currentTrick.size() >= players.size()) return;
+
+						Card cardToPlay = aiPlayer.chooseCardToPlay(currentTrick);
+						if (cardToPlay != null && aiPlayer.getHand().containsCard(cardToPlay)) {
+							Play aiPlay = new Play(aiPlayer, cardToPlay);
+							playCard(aiPlay);
+						}
+					} finally {
+						// libera la flag anche se la giocata non è avvenuta
+						aiPlayer.setIsThinking(false);
 					}
 				});
-				aiTimer.setRepeats(false);
-				aiTimer.start();
+				thinkTimer.setRepeats(false);
+				thinkTimer.start();
 			}
 		} else {
 			// La presa è finita, determina il vincitore
@@ -167,9 +184,9 @@ public class TressetteGame extends AbstractGame{
 		}
 	}
 
-    /**
-     * Termina la presa, determina il vincitore e assegna le carte.
-     */
+	/**
+	 * Termina la presa, determina il vincitore e assegna le carte.
+	 */
 	private void endTrick() {
 		Player winner = currentTrick.getWinningPlayer();
 
@@ -179,32 +196,32 @@ public class TressetteGame extends AbstractGame{
 			winner.getTeam().addTrick(currentTrick);
 			this.currentPlayer = winner;
 		}
-		Object[] payload = new Object[]{winner, plays,players};
+		Object payload = plays;
 		setChanged();
 		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TRICK_ENDED, payload));
 
 		//se ci sono carte si pesca ancora in base alla mode
 		if (winner != null) {
-			javax.swing.Timer timer = new javax.swing.Timer(500, e -> {
+				SwingUtilities.invokeLater(()->{
 				gameMode.handlePostTrickDraw(deck, players, winner);
 				if(gameMode instanceof TwoPlayerStrategy){
 					for(Player player : players){
 						if (player instanceof HumanPlayer){
 							player.getHand().sort();
+							setChanged();
+							notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.HAND_UPDATE, player.getHand()));
 						}
 					}
 				}
-			
+
 			});
-			timer.setRepeats(false);
-			timer.start();
 		}
 
 		if(isRoundOver()){
 			handleRoundEnd();
 		} else {
 			this.currentTrick = new Trick();
-			notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TURN_STARTED,getPlayerIndex(currentPlayer)));
+			nextTurn(false);	
 		}
 	}
 
@@ -215,7 +232,7 @@ public class TressetteGame extends AbstractGame{
 	private void handleRoundEnd(){
 
 		Team teamTooksLast = currentPlayer.getTeam(); //dovrebbe essere il vincitore perché alla fine del trick 
-																 //viene comunque cambiato l'indice al vincitore della mano
+													  //viene comunque cambiato l'indice al vincitore della mano
 		for(Team team : teams){
 			if(teamTooksLast.equals(team)){ team.updateTotalScore(true);}
 			else{ team.updateTotalScore(false);}	
@@ -238,8 +255,8 @@ public class TressetteGame extends AbstractGame{
 
 	public void handleGameOver(){
 		this.winningTeam = teams.stream()
-		   .max(Comparator.comparingInt(Team::getTeamPoints))
-		   .orElseThrow();
+			.max(Comparator.comparingInt(Team::getTeamPoints))
+			.orElseThrow();
 		if(userProfile != null){
 			Optional<Player> humanPlayer = winningTeam.getPlayers().stream().
 				filter(p -> p instanceof HumanPlayer)
@@ -252,7 +269,7 @@ public class TressetteGame extends AbstractGame{
 			setChanged();
 			notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.PROFILE_CHANGED,null));
 		}
-			
+
 		setChanged();
 		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.GAME_OVER, null));
 	}
@@ -291,7 +308,7 @@ public class TressetteGame extends AbstractGame{
 	 * @param play (carta e giocatore che la gioca)
 	 * @return true se la carta è stata giocata, false altrimenti
 	 */
-	public boolean playCard(Play play){
+	public synchronized boolean playCard(Play play){
 
 		if(!isValidPlay(play)){
 			return false;
@@ -304,14 +321,21 @@ public class TressetteGame extends AbstractGame{
 		player.playCard(card);
 		currentTrick.addPlay(play);
 
-		//notifico la view
-		setChanged();
+		//DEBUG
+		System.out.println("il giocatore" + player.toString() + "ha giocato la carta: " + card.toString());
+
 		// Includi sia la giocata (play) sia la lista dei giocatori
 		Object[] payload = {play, getPlayers()};
+		//notifico la view
+		setChanged();
 		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.CARD_PLAYED, payload));
-		
+
+		if(player instanceof HumanPlayer){
+			setChanged();
+			notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.PROFILE_CHANGED, (Object)player.getHand()));
+		}
 		//avanza il turno
-		nextTurn();
+		nextTurn(false);
 
 		return true;
 	}
@@ -319,24 +343,24 @@ public class TressetteGame extends AbstractGame{
 	/**
 	 * @return true if the round is over
 	 */
-    @Override
-    public boolean isRoundOver() {
-        // La smazzata è finita quando un giocatore non ha più carte
-        return players.stream().allMatch(player -> player.getHand().isEmpty());
-    }
+	@Override
+	public boolean isRoundOver() {
+		// La smazzata è finita quando un giocatore non ha più carte
+		return players.stream().allMatch(player -> player.getHand().isEmpty());
+	}
 
 	/**
 	 * @return true if the game is over
 	 */
-    @Override
-    public boolean isGameOver() {
-        for (Team team : teams) {
-            // La partita finisce quando una squadra raggiunge o supera i 21 punti
-            if (team.getTeamPoints() >= 21) {
-                return true;
-            }
-        }
-        return false;
-    }
-    
+	@Override
+	public boolean isGameOver() {
+		for (Team team : teams) {
+			// La partita finisce quando una squadra raggiunge o supera i 21 punti
+			if (team.getTeamPoints() >= 21) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 }

@@ -11,6 +11,7 @@ import org.model.*;
 import org.util.*;
 import java.awt.image.BufferedImage;
 import java.util.function.Consumer;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * classe che mostra il gioco del tressette 
@@ -83,10 +84,11 @@ public class GamePanel extends JPanel implements Observer{
                     case CARDS_DEALT -> handleCardsDealt(msg.getPayload());
                     case CARD_PLAYED -> handleCardPlayed(msg.getPayload());
                     case TURN_STARTED -> handleTurnStarted(msg.getPayload());
-                    case TRICK_ENDED -> handleTrickEnded(msg.getPayload());
+                    case TRICK_ENDED -> handleTrickEnded((List<Play>)msg.getPayload());
                     case ROUND_STARTED -> handleRoundStarted();
                     case ROUND_ENDED -> handleRoundEnded((List<Team>) msg.getPayload());
                     case GAME_OVER -> handleGameOver();
+					case HAND_UPDATE -> handleHandUpdate((Hand)msg.getPayload());
                     // Aggiunto un evento generico per un refresh completo
                     case GAME_STATE_UPDATE -> handleGameStateUpdate(msg.getPayload());
                 }
@@ -128,6 +130,8 @@ public class GamePanel extends JPanel implements Observer{
             Play play = (Play) data[0];
             List<Player> players = (List<Player>) data[1];
             int idx = players.indexOf(play.getPlayer());
+			//DEBUG
+			System.out.println("[HANDLE_CARD_PLAYED] player=" + play.getPlayer() + " idx=" + idx + " card=" + play.getCard());
             if (idx >= 0) {
                 playCard(idx, play.getCard());
             }
@@ -147,41 +151,57 @@ public class GamePanel extends JPanel implements Observer{
         }
     }
 
-	private void handleTrickStarted(Object payload){
-		if (payload instanceof Integer idx){
-			setCurrentPlayer(idx);
-		} else {
-			System.err.println("errore payload non valido");
-		}
-	}
-
-	private void handleTrickEnded(Object payload){
-		List<Play> plays = Collections.emptyList();
+	/**
+	 * gestisce la fine della "mano" 
+	 *
+	 * @param plays si aspetta un object List<Play>
+	 */
+	private void handleTrickEnded(List<Play> plays){
 		List<Player> players = new ArrayList<>();
 
-		// gestisce il nuovo payload Object[] {winner, playsSnapshot}
-		if (payload instanceof Object[]) {
-			Object[] arr = (Object[]) payload;
-			if (arr.length >= 1 && arr[0] instanceof List) {
-				plays = (List<Play>) arr[1];
-				for(Play play: plays){
-					players.add(play.getPlayer());
-				}
-			}
+		for(Play play: plays){
+			players.add(play.getPlayer());
 		}
 
-		// mostra subito le carte della mano (snapshot)
-		
-		updateTable(plays, players);
+		// Conteggio animazioni pendenti (usa AtomicInteger per lambda)
+    AtomicInteger animationsPending = new AtomicInteger(plays.size());
+
+    // Facoltativo: log per debug
+    System.out.println("[TRICK_ENDED] starts, plays=" + plays.size());
+
+    for (Play p : plays) {
+        Player pl = p.getPlayer();
+        int idx = players.indexOf(pl);
+        if (idx >= 0) {
+            System.out.println("[ANIM START] idx=" + idx + " card=" + p.getCard());
+            // Passiamo un callback che decrementa il contatore
+            tablePanel.playAnimatedCard(idx, p.getCard(), () -> {
+                int remaining = animationsPending.decrementAndGet();
+                System.out.println("[ANIM END] idx=" + idx + " remaining=" + remaining);
+                if (remaining <= 0) {
+                    // tutte le animazioni del trick sono finite
+                    // piccolo delay visivo opzionale (300ms)
+                    new javax.swing.Timer(300, ev -> {
+                        ((javax.swing.Timer) ev.getSource()).stop();
+                        updateTable(Collections.emptyList(), players);
+                    }) {{
+                        setRepeats(false);
+                        start();
+                    }};
+                }
+            });
+        }
+	}
 
 		// tienile a video per 1 secondo, poi pulisci e lascia partire il nuovo turno
-		new javax.swing.Timer(1000, e -> {
-			((javax.swing.Timer) e.getSource()).stop();
-			updateTable(Collections.emptyList(), players);
-		}) {{
-			setRepeats(false);
-			start();
-		}};
+		//DEBUG
+		//new javax.swing.Timer(1000, e -> {
+			//((javax.swing.Timer) e.getSource()).stop();
+			//updateTable(Collections.emptyList(), players);
+		//}) {{
+			//setRepeats(false);
+			//start();
+		//}};
 	}
 
     /**
@@ -204,6 +224,14 @@ public class GamePanel extends JPanel implements Observer{
         // Qui si potrebbe mostrare un pannello di fine partita.
         JOptionPane.showMessageDialog(this, "La partita è finita!", "Game Over", JOptionPane.INFORMATION_MESSAGE);
     }
+
+	/**
+	 * metodo che gestisce la notifica HAND_UPDATE
+	 * @param hand si asetta un HAND
+	 */
+	private void handleHandUpdate(Hand hand){
+		updateHand(hand.getCards());
+	}
     
 	/**
 	 * Aggiorna la visuale della mano umana.
@@ -264,7 +292,7 @@ public class GamePanel extends JPanel implements Observer{
 			Player pl = p.getPlayer();
 			int idx = players.indexOf(pl);
 			if (idx >= 0) {
-				tablePanel.playAnimatedCard(idx, p.getCard());
+				tablePanel.playAnimatedCard(idx, p.getCard(),null);
 			}
 		}
 	}
@@ -273,7 +301,10 @@ public class GamePanel extends JPanel implements Observer{
 	 */
 	public void playCard(int playerIdx, org.model.Card card){
 		if(tablePanel!=null){
-			tablePanel.playAnimatedCard(playerIdx, card);
+			tablePanel.playAnimatedCard(playerIdx, card,()->{
+				//DEBUG);
+				System.out.println("[HANDLE_CARD_PLAYED CALLBACK] idx=" + playerIdx + " card=" + card.toString());
+			});
 		} 
 	}
 
