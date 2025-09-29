@@ -11,15 +11,29 @@ import java.awt.image.BufferedImage;
  *
  * @author steppasecca
  */
-public class CardView extends JComponent {
+public class CardView extends JComponent implements Animatable{
     private static final long serialVersionUID = 1L; //evita InvalidClassException
     private Card card;
     private BufferedImage image; // cached image for this card (from ImageCache)
 
-    public CardView(Card card) {
+	//riferimento al loop di animazione
+	private final AnimationLoop animationLoop;
+
+	//informazioni sullo stato dell'animazione
+	private Point startLocation;
+	private Point targetLocation;
+	private Runnable onComplete; //callback per quando finisce l'animazione
+	private boolean isAnimating = false;
+	private long startTime;
+
+	//costante per la durata dell'animazione
+	private final double ANIMATION_DURATION = 0.5;
+
+    public CardView(Card card, AnimationLoop animationLoop) {
         this.card = card;
         if (card != null) this.image = ImageCache.getImageForCard(card);
 		setSize(80, 120);
+		this.animationLoop = animationLoop;
     }
 
 	/**
@@ -75,36 +89,80 @@ public class CardView extends JComponent {
     }
 	
 	/**
-	 * metodo che produce un'animazione di una carta spostandola da un punto iniziale ad uno finale
-	 * @param x //coordinate di partenza
-	 * @param y
-	 * @param targetX //coordinate finali
-	 * @param targetY
-	 * @param onComplete //Runnable per callback quando finisce l'animazione
-	 */
-	public void animateTo(int startX, int startY, int targetX, int targetY, Runnable onComplete) {
-		int steps = 40;
-		int delay = 20;
+     * Inizializza e avvia l'animazione al punto target specificato.
+     * @param x Coordinata X di destinazione.
+     * @param y Coordinata Y di destinazione.
+     * @param onComplete Codice da eseguire al termine dell'animazione.
+     */
+    public void animateTo(int x, int y, Runnable onComplete) {
+        // Se c'è un'animazione in corso, la interrompiamo e ne avviamo una nuova.
+        if (isAnimating) {
+            animationLoop.removeAnimatable(this); 
+        }
 
-		double dx = (targetX - startX) / (double) steps;
-		double dy = (targetY - startY) / (double) steps;
+        // Impostazione dello stato
+        this.startLocation = this.getLocation();
+        this.targetLocation = new Point(x, y);
+        this.onComplete = onComplete;
+        this.startTime = System.currentTimeMillis(); // Inizio del tempo di animazione
+        this.isAnimating = true;
 
-		final int[] currentStep = {0};
-		final double[] pos = {startX, startY};
+        // Passa a sé stesso (this) al thread di animazione per l'aggiornamento
+        this.animationLoop.addAnimatable(this);
+    }
+	@Override
+    public boolean isAnimating() {
+        return isAnimating;
+    }
+    /**
+     * Esegue un singolo passo di animazione. Chiamato dal AnimationLoop 60 volte al secondo.
+     * @param deltaTime Tempo trascorso dall'ultimo aggiornamento (non usato qui, ma utile per movimenti complessi).
+     */
+    @Override
+    public void stepAnimation(double deltaTime) {
+        if (!isAnimating) return;
 
-		Timer animTimer = new Timer(delay, e -> {
-			pos[0] += dx;
-			pos[1] += dy;
-			setLocation((int) Math.round(pos[0]), (int) Math.round(pos[1]));
-			repaint();
+        // Calcola il tempo trascorso in secondi
+        double elapsedTime = (System.currentTimeMillis() - startTime) / 1000.0;
+        
+        // Calcola la percentuale di progresso (0.0 a 1.0), limitando a 1.0
+        double progress = Math.min(1.0, elapsedTime / ANIMATION_DURATION);
 
-			currentStep[0]++;
-			if (currentStep[0] >= steps) {
-				setLocation(targetX, targetY);
-				((Timer) e.getSource()).stop();
-				if (onComplete != null) onComplete.run();
-			}
-		});
-		animTimer.start();
-	}
+        if (progress >= 1.0) {
+            // --- Animazione Completata ---
+            
+            // Imposta la posizione finale e notifica l'EDT
+            updateUIPosition(targetLocation.x, targetLocation.y);
+            
+            isAnimating = false; // Ferma l'animazione
+            
+            // Esegue la callback sull'EDT per sicurezza
+            if (onComplete != null) {
+                SwingUtilities.invokeLater(onComplete);
+            }
+            
+            // L'AnimationLoop la rimuoverà dal set nel prossimo ciclo
+            return;
+        }
+
+        // --- Calcolo della Posizione Intermedia ---
+
+        // Funzione di easing lineare (può essere sostituita con easing functions più complesse)
+        int newX = (int) (startLocation.x + (targetLocation.x - startLocation.x) * progress);
+        int newY = (int) (startLocation.y + (targetLocation.y - startLocation.y) * progress);
+
+        // Aggiorna la UI sull'Event Dispatch Thread (EDT)
+        updateUIPosition(newX, newY);
+    }
+
+    /**
+     * Delega le modifiche ai componenti Swing (che non sono thread-safe) all'EDT.
+     */
+    private void updateUIPosition(int x, int y) {
+        SwingUtilities.invokeLater(() -> {
+            // Queste chiamate devono avvenire sull'EDT
+            this.setLocation(x, y);
+            this.repaint(); 
+        });
+    }
 }

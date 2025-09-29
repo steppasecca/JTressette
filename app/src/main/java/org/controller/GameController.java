@@ -61,6 +61,7 @@ public class GameController{
 		if(model!=null){
 			view.initGP(model.getPlayers());
 
+			view.getAnimationLoop().start();
 			// Configura il listener per le carte del giocatore umano
 			view.setCardClickListener(card -> {
 				Player humanPlayer = model.getPlayers().stream()
@@ -72,6 +73,9 @@ public class GameController{
 					Play play = new Play(humanPlayer, card);
 					if(model.isValidPlay(play)){
 						model.playCard(play);
+					}
+					else{
+						System.out.println("giocata non valida");
 					}
 				}
 			});

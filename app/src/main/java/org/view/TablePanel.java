@@ -14,7 +14,10 @@ public class TablePanel extends JPanel {
 	private final List<CardSlot> slots;
 	private final int slotCount;
 
-	public TablePanel(List<Player> players){
+	//riferimento ad animationLoop
+	private final AnimationLoop animationLoop;
+
+	public TablePanel(List<Player> players, AnimationLoop animationLoop){
 		if(players==null || !(players.size()==2 || players.size()==4)){
 			throw new IllegalArgumentException("TablePanel supporta 2 o 4 giocatori/giocatrici");
 		}
@@ -23,6 +26,7 @@ public class TablePanel extends JPanel {
 		setLayout(null);
 		setBackground(new Color(20,80,55));
 		initSlots(players);
+		this.animationLoop = animationLoop;
 	}
 	 
 	private void initSlots(List<Player> players){
@@ -107,7 +111,7 @@ public class TablePanel extends JPanel {
 		int targetX = getWidth()/2;
 		int targetY = getHeight()/2;
 
-		CardView animatedCard = new CardView(card);
+		CardView animatedCard = new CardView(card,animationLoop);
 		animatedCard.setLocation(startX,startY);
 		add(animatedCard);
 		setComponentZOrder(animatedCard, 0); // portala davanti
@@ -116,7 +120,7 @@ public class TablePanel extends JPanel {
 		//DEBUG 
 		System.out.println("[PLAY_ANIM] playerIdx=" + playeridx + " slotPos=(" + startX + "," + startY + ") target=(" + targetX + "," + targetY + ")");
 
-		animatedCard.animateTo(startX, startY, targetX, targetY, () -> {
+		animatedCard.animateTo(targetX, targetY, () -> {
 			remove(animatedCard);
 			revalidate();
 			repaint();
@@ -129,6 +133,11 @@ public class TablePanel extends JPanel {
 
 		});
 	}	
+
+	public void PlayCard(int playerIdx,Card card){
+		CardSlot cardSlot = slots.get(playerIdx);
+		cardSlot.setLastPlayedCard(card);
+	}
 
 	public void clearTablePanel(){
 		for(CardSlot slot:slots){

@@ -187,42 +187,51 @@ public class TressetteGame extends AbstractGame{
 	/**
 	 * Termina la presa, determina il vincitore e assegna le carte.
 	 */
-	private void endTrick() {
-		Player winner = currentTrick.getWinningPlayer();
+private void endTrick() {
+    Player winner = currentTrick.getWinningPlayer();
 
-		//salvo le giocate prima di pulire il trick
-		List<Play> plays = currentTrick.getPlays();
-		if (winner != null) {
-			winner.getTeam().addTrick(currentTrick);
-			this.currentPlayer = winner;
-		}
-		Object payload = plays;
-		setChanged();
-		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TRICK_ENDED, payload));
+    // salvo le giocate prima di pulire il trick
+    List<Play> plays = currentTrick.getPlays();
+    if (winner != null) {
+        winner.getTeam().addTrick(currentTrick);
+        this.currentPlayer = winner;
+    }
 
-		//se ci sono carte si pesca ancora in base alla mode
-		if (winner != null) {
-				SwingUtilities.invokeLater(()->{
-				gameMode.handlePostTrickDraw(deck, players, winner);
-				if(gameMode instanceof TwoPlayerStrategy){
-					for(Player player : players){
-						if (player instanceof HumanPlayer){
-							player.getHand().sort();
-							setChanged();
-							notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.HAND_UPDATE, player.getHand()));
-						}
-					}
-				}
+    if (winner != null) {
+        // Timer da 1000 ms (1 secondo), parte una sola volta
+        //new javax.swing.Timer(1000, e -> {
+            // Notifico alla view che il trick è terminato
+            Object payload = plays;
+            setChanged();
+            notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TRICK_ENDED, payload));
 
-			});
-		}
+            // Poi gestisco la pesca
+            gameMode.handlePostTrickDraw(deck, players, winner);
 
+            if (gameMode instanceof TwoPlayerStrategy) {
+                for (Player player : players) {
+                    if (player instanceof HumanPlayer) {
+                        player.getHand().sort();
+                        setChanged();
+                        notifyObservers(new ModelEventMessage(
+                            ModelEventMessage.ModelEvent.HAND_UPDATE,
+                            player.getHand()
+                        ));
+                    }
+                }
+            }
 		if(isRoundOver()){
 			handleRoundEnd();
 		} else {
 			this.currentTrick = new Trick();
 			nextTurn(false);	
 		}
+        //}) {{
+            //setRepeats(false); // esegui solo una volta
+            //start();
+        //}};
+    }
+
 	}
 
 	/**

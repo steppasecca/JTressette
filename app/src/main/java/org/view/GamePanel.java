@@ -11,7 +11,6 @@ import org.model.*;
 import org.util.*;
 import java.awt.image.BufferedImage;
 import java.util.function.Consumer;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * classe che mostra il gioco del tressette 
@@ -28,10 +27,13 @@ public class GamePanel extends JPanel implements Observer{
 	//listener click sulle carte
 	private Consumer<Card> cardClickListener = c -> {};
 
+	//unica instanza di AnimationLoop
+	private final AnimationLoop animationLoop;
+
+
 	public GamePanel (){
 		super(new BorderLayout(8,8));
-
-
+		this.animationLoop = new AnimationLoop();
 	}
 
 	/**
@@ -43,7 +45,7 @@ public class GamePanel extends JPanel implements Observer{
 		//definisco i pannelli interni
 		handPanel = new JPanel(new FlowLayout(FlowLayout.CENTER,5,5));
 		scorePanel = new JPanel(new GridLayout(0,1));
-		tablePanel = new TablePanel(players);
+		tablePanel = new TablePanel(players,animationLoop);
 
 		//definisco il bottone per la pausa
 		pauseButton = new JButton("pausa");
@@ -133,7 +135,7 @@ public class GamePanel extends JPanel implements Observer{
 			//DEBUG
 			System.out.println("[HANDLE_CARD_PLAYED] player=" + play.getPlayer() + " idx=" + idx + " card=" + play.getCard());
             if (idx >= 0) {
-                playCard(idx, play.getCard());
+				playCard(idx, play.getCard());
             }
         }
     }
@@ -163,45 +165,7 @@ public class GamePanel extends JPanel implements Observer{
 			players.add(play.getPlayer());
 		}
 
-		// Conteggio animazioni pendenti (usa AtomicInteger per lambda)
-    AtomicInteger animationsPending = new AtomicInteger(plays.size());
-
-    // Facoltativo: log per debug
-    System.out.println("[TRICK_ENDED] starts, plays=" + plays.size());
-
-    for (Play p : plays) {
-        Player pl = p.getPlayer();
-        int idx = players.indexOf(pl);
-        if (idx >= 0) {
-            System.out.println("[ANIM START] idx=" + idx + " card=" + p.getCard());
-            // Passiamo un callback che decrementa il contatore
-            tablePanel.playAnimatedCard(idx, p.getCard(), () -> {
-                int remaining = animationsPending.decrementAndGet();
-                System.out.println("[ANIM END] idx=" + idx + " remaining=" + remaining);
-                if (remaining <= 0) {
-                    // tutte le animazioni del trick sono finite
-                    // piccolo delay visivo opzionale (300ms)
-                    new javax.swing.Timer(300, ev -> {
-                        ((javax.swing.Timer) ev.getSource()).stop();
-                        updateTable(Collections.emptyList(), players);
-                    }) {{
-                        setRepeats(false);
-                        start();
-                    }};
-                }
-            });
-        }
-	}
-
-		// tienile a video per 1 secondo, poi pulisci e lascia partire il nuovo turno
-		//DEBUG
-		//new javax.swing.Timer(1000, e -> {
-			//((javax.swing.Timer) e.getSource()).stop();
-			//updateTable(Collections.emptyList(), players);
-		//}) {{
-			//setRepeats(false);
-			//start();
-		//}};
+		tablePanel.clearTablePanel();
 	}
 
     /**
@@ -327,6 +291,15 @@ public class GamePanel extends JPanel implements Observer{
 	 */
 	public void setCardClickListener(Consumer<Card> listener){
 		this.cardClickListener = listener;
+	}
+
+	/**
+	 * getter per l'animation loop
+	 *
+	 * @return animationLoop
+	 */
+	public AnimationLoop getAnimationLoop(){
+		return this.animationLoop;
 	}
 }
 

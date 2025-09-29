@@ -22,7 +22,7 @@ public class CardSlot extends JPanel{
     private void init(String name) {
         setLayout(new BorderLayout(4,4));
         nameLabel = new JLabel(name,SwingConstants.CENTER);
-        lastCardView = new CardView(null);
+        lastCardView = new CardView(null,null);
         add(nameLabel, BorderLayout.NORTH);
         add(lastCardView, BorderLayout.CENTER);
         setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 2));
