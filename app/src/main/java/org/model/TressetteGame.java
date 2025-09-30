@@ -135,43 +135,42 @@ public class TressetteGame extends AbstractGame{
 	}
 
 	/**
-	 * gestisceil passaggio al prossimo turno
-	 * @return void
+	 * gestisce il passaggio al prossimo turno
 	 */
 	@Override
 	public void nextTurn(boolean isStartPlayer) {
 		if (currentTrick.size() < players.size()) {
-
 			// Sposta il turno al prossimo giocatore
-			if(!isStartPlayer){
+			if (!isStartPlayer) {
 				currentPlayer = players.get((getPlayerIndex(currentPlayer) + 1) % players.size());
 			}
-
 			setChanged();
 			notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TURN_STARTED, getPlayerIndex(currentPlayer)));
-
 			if (currentPlayer instanceof ArtificialPlayer) {
 				ArtificialPlayer aiPlayer = (ArtificialPlayer) currentPlayer;
-
-				// Evita di schedulare più volte (puoi mantenere questa flag sul Player o altrove)
 				if (aiPlayer.isThinking()) {
+					System.out.println("[nextTurn] AI blocked: isThinking=true for " + aiPlayer);
 					return;
 				}
 				aiPlayer.setIsThinking(true);
-
-				javax.swing.Timer thinkTimer = new javax.swing.Timer(1000,e->{
+				javax.swing.Timer thinkTimer = new javax.swing.Timer(1000, e -> {
 					try {
-						// Verifica che sia ancora il turno di questa IA e che il trick richieda una mossa
-						if (currentPlayer != aiPlayer) return;
-						if (currentTrick.size() >= players.size()) return;
-
+						if (currentPlayer != aiPlayer) {
+							System.out.println("[AITimer] Skipped: currentPlayer changed");
+							return;
+						}
+						if (currentTrick.size() >= players.size()) {
+							System.out.println("[AITimer] Skipped: trick full, size=" + currentTrick.size());
+							return;
+						}
 						Card cardToPlay = aiPlayer.chooseCardToPlay(currentTrick);
 						if (cardToPlay != null && aiPlayer.getHand().containsCard(cardToPlay)) {
 							Play aiPlay = new Play(aiPlayer, cardToPlay);
 							playCard(aiPlay);
+						} else {
+							System.out.println("[AITimer] No valid card to play for " + aiPlayer);
 						}
 					} finally {
-						// libera la flag anche se la giocata non è avvenuta
 						aiPlayer.setIsThinking(false);
 					}
 				});
@@ -179,7 +178,6 @@ public class TressetteGame extends AbstractGame{
 				thinkTimer.start();
 			}
 		} else {
-			// La presa è finita, determina il vincitore
 			endTrick();
 		}
 	}
@@ -187,50 +185,50 @@ public class TressetteGame extends AbstractGame{
 	/**
 	 * Termina la presa, determina il vincitore e assegna le carte.
 	 */
-private void endTrick() {
-    Player winner = currentTrick.getWinningPlayer();
+	private void endTrick() {
+		Player winner = currentTrick.getWinningPlayer();
 
-    // salvo le giocate prima di pulire il trick
-    List<Play> plays = currentTrick.getPlays();
-    if (winner != null) {
-        winner.getTeam().addTrick(currentTrick);
-        this.currentPlayer = winner;
-    }
-
-    if (winner != null) {
-        // Timer da 1000 ms (1 secondo), parte una sola volta
-        //new javax.swing.Timer(1000, e -> {
-            // Notifico alla view che il trick è terminato
-            Object payload = plays;
-            setChanged();
-            notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TRICK_ENDED, payload));
-
-            // Poi gestisco la pesca
-            gameMode.handlePostTrickDraw(deck, players, winner);
-
-            if (gameMode instanceof TwoPlayerStrategy) {
-                for (Player player : players) {
-                    if (player instanceof HumanPlayer) {
-                        player.getHand().sort();
-                        setChanged();
-                        notifyObservers(new ModelEventMessage(
-                            ModelEventMessage.ModelEvent.HAND_UPDATE,
-                            player.getHand()
-                        ));
-                    }
-                }
-            }
-		if(isRoundOver()){
-			handleRoundEnd();
-		} else {
-			this.currentTrick = new Trick();
-			nextTurn(false);	
+		// salvo le giocate prima di pulire il trick
+		List<Play> plays = currentTrick.getPlays();
+		if (winner != null) {
+			winner.getTeam().addTrick(currentTrick);
+			this.currentPlayer = winner;
 		}
-        //}) {{
-            //setRepeats(false); // esegui solo una volta
-            //start();
-        //}};
-    }
+
+		if (winner != null) {
+			// Timer da 1000 ms (1 secondo), parte una sola volta
+			new javax.swing.Timer(2000, e -> {
+				// Notifico alla view che il trick è terminato
+				Object payload = plays;
+				setChanged();
+				notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TRICK_ENDED, payload));
+
+				// Poi gestisco la pesca
+				gameMode.handlePostTrickDraw(deck, players, winner);
+
+				if (gameMode instanceof TwoPlayerStrategy) {
+					for (Player player : players) {
+						if (player instanceof HumanPlayer) {
+							player.getHand().sort();
+							setChanged();
+							notifyObservers(new ModelEventMessage(
+										ModelEventMessage.ModelEvent.HAND_UPDATE,
+										player.getHand()
+										));
+						}
+					}
+				}
+				if(isRoundOver()){
+					handleRoundEnd();
+				} else {
+					this.currentTrick = new Trick();
+					nextTurn(true);	
+				}
+			}) {{
+				setRepeats(false); // esegui solo una volta
+				start();
+			}};
+		}
 
 	}
 
@@ -292,11 +290,16 @@ private void endTrick() {
 		Player player = play.getPlayer();
 		Card card = play.getCard();
 
+		//controlla se il trick è pieno
+		if(currentTrick.getCards().size()>=players.size()){
+			return false;
+		}
 		// Deve essere il turno giusto
 		if(!currentPlayer.equals(player)) return false;
 
 		// La carta deve stare nella mano
 		if (!player.getHand().containsCard(card)) return false;
+
 
 		// Se non è il primo della mano, deve rispondere al seme
 		if (!currentTrick.isEmpty()) {
@@ -317,35 +320,27 @@ private void endTrick() {
 	 * @param play (carta e giocatore che la gioca)
 	 * @return true se la carta è stata giocata, false altrimenti
 	 */
-	public synchronized boolean playCard(Play play){
-
-		if(!isValidPlay(play)){
+	/**
+	 * esegue una giocata se è valida
+	 */
+	public synchronized boolean playCard(Play play) {
+		if (!isValidPlay(play)) {
+			System.out.println("[playCard] Giocata non valida: player=" + play.getPlayer() + ", card=" + play.getCard());
 			return false;
 		}
-
 		Player player = play.getPlayer();
 		Card card = play.getCard();
-
-		//il giocatore gioca la carte e la aggiunge al trick
 		player.playCard(card);
 		currentTrick.addPlay(play);
-
-		//DEBUG
 		System.out.println("il giocatore" + player.toString() + "ha giocato la carta: " + card.toString());
-
-		// Includi sia la giocata (play) sia la lista dei giocatori
 		Object[] payload = {play, getPlayers()};
-		//notifico la view
 		setChanged();
 		notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.CARD_PLAYED, payload));
-
-		if(player instanceof HumanPlayer){
+		if (player instanceof HumanPlayer) {
 			setChanged();
-			notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.PROFILE_CHANGED, (Object)player.getHand()));
+			notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.HAND_UPDATE, player.getHand()));
 		}
-		//avanza il turno
 		nextTurn(false);
-
 		return true;
 	}
 
