@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
  */
 public class ArtificialPlayer extends Player {
 	
-	boolean isThinking; //flag per il controllo della sincronia all'interno della logica di gioco
+	private volatile boolean isThinking; //flag per il controllo della sincronia all'interno della logica di gioco
 
 	public ArtificialPlayer(String name) {
 		super(name);

@@ -138,7 +138,7 @@ public class TressetteGame extends AbstractGame{
 	 * gestisce il passaggio al prossimo turno
 	 */
 	@Override
-	public void nextTurn(boolean isStartPlayer) {
+	public synchronized void nextTurn(boolean isStartPlayer) {
 		if (currentTrick.size() < players.size()) {
 			// Sposta il turno al prossimo giocatore
 			if (!isStartPlayer) {
@@ -185,7 +185,7 @@ public class TressetteGame extends AbstractGame{
 	/**
 	 * Termina la presa, determina il vincitore e assegna le carte.
 	 */
-	private void endTrick() {
+	private synchronized void endTrick() {
 		Player winner = currentTrick.getWinningPlayer();
 
 		// salvo le giocate prima di pulire il trick
