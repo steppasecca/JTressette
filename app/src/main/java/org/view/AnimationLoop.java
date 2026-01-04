@@ -6,23 +6,27 @@ import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashSet;
 
 /**
- * Gestisce il ciclo di animazione in un thread separato implementa Runnable
+ * Gestisce il ciclo di animazione in un thread separato implementando Runnable
  */
 public class AnimationLoop implements Runnable {
     // fps dell'animazione
     private final int FPS = 60;
-    // Tempo target per frame in nanosecondi (~16.67 ms)
+    // tempo target per frame in nanosecondi (~16.67 ms)
     private final long TARGET_TIME_NS = 1_000_000_000L / FPS;
 
     private volatile boolean isRunning = false;
     private Thread gameThread;
     
-    // Set di oggetti che implementano Animatable e sono in animazione
-    private final Set<Animatable> animatedObjects = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    // set di oggetti che implementano Animatable e sono in animazione
+    private final Set<Animatable> animatedObjects = Collections.synchronizedSet(new HashSet<>());
+
+    // flag per cercare di evitare repaint inutili
+    private volatile boolean repaintScheduled = false;
     
-    // NUOVO: Componente da ridisegnare (tipicamente il TablePanel o GamePanel)
+    // componente da ridisegnare 
     private volatile JComponent repaintTarget;
 
     /**
@@ -79,64 +83,55 @@ public class AnimationLoop implements Runnable {
     @Override
     public void run() {
         long lastLoopTime = System.nanoTime();
-        List<Animatable> toRemove = new ArrayList<>();
         
         while (isRunning) {
             long now = System.nanoTime();
             double deltaTime = (now - lastLoopTime) / 1_000_000_000.0;
             lastLoopTime = now;
             
-            // Pulisci la lista dei rimovibili
-            toRemove.clear();
             boolean anyAnimating = false;
             
-            // Aggiorna tutte le animazioni
-            for (Animatable obj : animatedObjects) {
+            // creo una copia per iterare in sicurezza
+            List<Animatable> snapshot;
+            synchronized (animatedObjects) {
+                snapshot = new ArrayList<>(animatedObjects);
+            }
+            
+            // Itero sulla copia 
+            for (Animatable obj : snapshot) {
                 obj.stepAnimation(deltaTime);
                 
                 if (!obj.isAnimating()) {
-                    toRemove.add(obj);
+                    // Rimuovi in modo thread-safe
+                    animatedObjects.remove(obj);
                 } else {
                     anyAnimating = true;
                 }
             }
             
-            // Rimuovi gli oggetti che hanno finito l'animazione
-            // DOPO l'iterazione per evitare ConcurrentModificationException
-            for (Animatable obj : toRemove) {
-                animatedObjects.remove(obj);
-            }
-            
-            // REPAINT CENTRALIZZATO: un solo repaint per frame
-            // Solo se c'è almeno un'animazione attiva
-            if (anyAnimating && repaintTarget != null) {
+            // repaint solo se necessario
+            if (anyAnimating && repaintTarget != null && !repaintScheduled) {
+                repaintScheduled = true;
                 SwingUtilities.invokeLater(() -> {
-                    repaintTarget.repaint();
+                    if (repaintTarget != null) {
+                        repaintTarget.repaint();
+                    }
+                    repaintScheduled = false;
                 });
             }
             
-            // Calcola il tempo di sleep per mantenere gli FPS target
             long timeTaken = System.nanoTime() - now;
             long sleepTimeNS = TARGET_TIME_NS - timeTaken;
             
             if (sleepTimeNS > 0) {
-                // conversione in millisecondi e nanosecondi
                 long sleepTimeMS = sleepTimeNS / 1_000_000;
                 int remainingNanos = (int) (sleepTimeNS % 1_000_000);
                 try {
                     Thread.sleep(sleepTimeMS, remainingNanos);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    break; // Esci dal loop se interrotto
+                    break;
                 }
-            }
-            
-            // Optional: Log performance warning se il frame è troppo lento
-            if (timeTaken > TARGET_TIME_NS * 2) {
-                System.err.println("[AnimationLoop] Warning: Frame took " + 
-                    (timeTaken / 1_000_000.0) + "ms (target: " + 
-                    (TARGET_TIME_NS / 1_000_000.0) + "ms), Objects: " + 
-                    animatedObjects.size());
             }
         }
     }

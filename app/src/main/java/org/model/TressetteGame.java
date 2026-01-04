@@ -138,7 +138,7 @@ public class TressetteGame extends AbstractGame{
 	 * gestisce il passaggio al prossimo turno
 	 */
 	@Override
-	public synchronized void nextTurn(boolean isStartPlayer) {
+	public void nextTurn(boolean isStartPlayer) {
 		if (currentTrick.size() < players.size()) {
 			// Sposta il turno al prossimo giocatore
 			if (!isStartPlayer) {
@@ -323,7 +323,7 @@ public class TressetteGame extends AbstractGame{
 	/**
 	 * esegue una giocata se è valida
 	 */
-	public synchronized boolean playCard(Play play) {
+	public boolean playCard(Play play) {
 		if (!isValidPlay(play)) {
 			System.out.println("[playCard] Giocata non valida: player=" + play.getPlayer() + ", card=" + play.getCard());
 			return false;
