@@ -34,7 +34,7 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = "org.controller.Main"
+    mainClass = "org.Main"
 }
 
 tasks.named<Test>("test") {
