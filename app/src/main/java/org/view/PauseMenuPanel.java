@@ -15,6 +15,8 @@ public class PauseMenuPanel extends JPanel{
 	private Runnable onToggleMusic;
 	private Runnable onReturnToMenu;
 
+	JButton musicButton = new JButton();
+
 	public PauseMenuPanel(){
 		setLayout(new GridBagLayout());
 		setOpaque(false);
@@ -26,7 +28,7 @@ public class PauseMenuPanel extends JPanel{
 
 		//bottoni
 		JButton resumeButton = new JButton("resume");
-		JButton musicButton = new JButton(AudioManager.getInstance().isPlaying() ? "take music off" : "take music on" );
+    updateMusicButtonText();
 		JButton mainMenuButton = new JButton("torna al menu principale");
 
 		//resumeButton listener
@@ -57,6 +59,24 @@ public class PauseMenuPanel extends JPanel{
     public void setOnResume(Runnable r) { this.onResume = r; }
     public void setOnToggleMusic(Runnable r) { this.onToggleMusic = r; }
     public void setOnReturnToMenu(Runnable r) { this.onReturnToMenu = r; }
+
+    /**
+     * Aggiorna il testo del bottone della musica in base allo stato corrente
+     */
+    public void updateMusicButtonText() {
+        if (musicButton != null) {
+            boolean isPlaying = AudioManager.getInstance().isPlaying();
+            musicButton.setText(isPlaying ? "Spegni musica" : "Accendi musica");
+        }
+    }
+
+  /**
+   * setta il testo del bottone della musica in base allo stato fornitogli
+    *@param text
+    */
+    public void setMusicButtonText(String text){
+        musicButton.setText(text);
+    }  
 
 	@Override
 	protected void paintComponent(Graphics g){

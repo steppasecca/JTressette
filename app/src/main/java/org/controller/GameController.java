@@ -3,6 +3,7 @@ package org.controller;
 import org.view.GamePanel;
 import org.view.PauseMenuPanel;
 import org.model.*;
+import org.util.AudioManager; 
 
 public class GameController {
 
@@ -10,6 +11,7 @@ public class GameController {
     private GamePanel view;
     private PauseMenuPanel pauseMenuPanel;
     private TressetteGame model;
+    private boolean musicStarted;
 
     public GameController(AppController appController) {
         this.appController = appController;
@@ -30,9 +32,23 @@ public class GameController {
 
     private void setPausePanelCallback() {
         pauseMenuPanel.setOnResume(() -> appController.hideOverlay());
-        pauseMenuPanel.setOnToggleMusic(null);
+        pauseMenuPanel.setOnToggleMusic(() -> {
+            AudioManager audio = AudioManager.getInstance();
+            if (!musicStarted) {
+                audio.playBackground("music.wav");
+                musicStarted = true;
+                pauseMenuPanel.setMusicButtonText("Spegni Musica");
+            } else {
+                if (audio.isPlaying()) {
+                    audio.pauseBackground();
+                } else {
+                    audio.resumeBackground();
+                }
+            }
+            pauseMenuPanel.updateMusicButtonText();
+        });
         pauseMenuPanel.setOnReturnToMenu(() -> {
-            // IMPORTANTE: Ferma l'animation loop quando si torna al menu
+            //ferma l'animation loop quando si torna al menu
             stopGame();
             appController.hideOverlay();
             appController.showMainMenu();
@@ -78,6 +94,7 @@ public class GameController {
     public void startGame() {
         if (model != null) {
             model.startGame();
+        //AudioManager.getInstance().playBackground("music.wav");
         }
     }
 

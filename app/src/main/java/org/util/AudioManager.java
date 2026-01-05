@@ -33,7 +33,8 @@ public class AudioManager {
     public void playBackground(String filename) {
         stopBackground(); // nel caso stia già suonando
         try {
-        InputStream in = getClass().getResourceAsStream(filename);
+        String path = "/music/" + filename;
+        InputStream in = getClass().getResourceAsStream(path);
         if (in == null) {
             System.err.println("File audio non trovato: " + filename);
             return;
