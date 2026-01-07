@@ -1,7 +1,8 @@
 package org.util;
 
 import java.io.BufferedInputStream;
-import java.io.FileInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -28,36 +29,69 @@ public class AudioManager {
 
     /**
      * Avvia la musica di sottofondo in loop continuo
-     * @param filename percorso del file audio
+     * @param filename nome del file audio 
      */
     public void playBackground(String filename) {
         stopBackground(); // nel caso stia già suonando
         try {
-        String path = "/music/" + filename;
-        InputStream in = getClass().getResourceAsStream(path);
-        if (in == null) {
-            System.err.println("File audio non trovato: " + filename);
-            return;
-        }
-        in = new BufferedInputStream(in);
-            AudioInputStream audioIn = AudioSystem.getAudioInputStream(in);
+            String path = "/music/" + filename;
+            System.out.println("[AudioManager] Caricamento: " + path);
+            
+            // Carica lo stream dalle risorse
+            InputStream resourceStream = getClass().getResourceAsStream(path);
+            if (resourceStream == null) {
+                System.err.println("[AudioManager] File audio non trovato: " + path);
+                return;
+            }
+            
+            // carica tutto in memoria per garantire il loop
+            byte[] audioBytes = loadAudioBytes(resourceStream);
+            resourceStream.close();
+            
+            // Crea un nuovo stream dalla memoria
+            ByteArrayInputStream byteStream = new ByteArrayInputStream(audioBytes);
+            AudioInputStream audioIn = AudioSystem.getAudioInputStream(new BufferedInputStream(byteStream));
+            
             backgroundClip = AudioSystem.getClip();
             backgroundClip.open(audioIn);
+            
+            
             backgroundClip.loop(Clip.LOOP_CONTINUOUSLY); // musica infinita
             backgroundClip.start();
+            
+            
         } catch (IOException | UnsupportedAudioFileException | LineUnavailableException e) {
+            System.err.println("[AudioManager] Errore nel caricare la musica:");
             e.printStackTrace();
         }
+    }
+    
+    /**
+     * Carica l'intero file audio in un array di byte
+     */
+    private byte[] loadAudioBytes(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        byte[] temp = new byte[4096];
+        int bytesRead;
+        
+        while ((bytesRead = inputStream.read(temp)) != -1) {
+            buffer.write(temp, 0, bytesRead);
+        }
+        
+        return buffer.toByteArray();
     }
 
     /**
      * Ferma la musica di sottofondo
      */
     public void stopBackground() {
-        if (backgroundClip != null && backgroundClip.isRunning()) {
-            backgroundClip.stop();
+        if (backgroundClip != null) {
+            if (backgroundClip.isRunning()) {
+                backgroundClip.stop();
+            }
             backgroundClip.close();
             backgroundClip = null;
+            System.out.println("[AudioManager] Musica fermata");
         }
     }
 
@@ -74,6 +108,7 @@ public class AudioManager {
     public void pauseBackground() {
         if (backgroundClip != null && backgroundClip.isRunning()) {
             backgroundClip.stop();
+            System.out.println("[AudioManager] Musica in pausa");
         }
     }
 
@@ -83,6 +118,7 @@ public class AudioManager {
     public void resumeBackground() {
         if (backgroundClip != null && !backgroundClip.isRunning()) {
             backgroundClip.start();
+            System.out.println("[AudioManager] Musica ripresa");
         }
     }
 }

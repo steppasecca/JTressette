@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Optional;
 
+import javax.swing.Timer;
 import javax.swing.SwingUtilities;
 
 import org.util.*;
@@ -18,6 +19,7 @@ public class TressetteGame extends AbstractGame{
 	private final UserProfile userProfile; //penso si possa eliminare questo
 	private static final int DEFAULT_WINNING_SCORE = 21; //punteggio massimo del tresetto magari poi lo metto come opzione
 	private final int teamsCount = 2; //quantità di squadre in una partita del tressette
+  private List<Timer> activeTimers = new ArrayList<>(); //campo per tracciare i timer attivi(per il cleanup)
 
 	/**
 	 * Costruttore che accetta una strategia per la modalità di gioco e un profilo utente.
@@ -41,36 +43,52 @@ public class TressetteGame extends AbstractGame{
 	 * @param userProfile
 	 * @return void
 	 */
-	private void setupGame(UserProfile profile) {
-		this.teams = new ArrayList<>();
-		this.players = new ArrayList<>();
-		this.players.clear();
+private void setupGame(UserProfile profile) {
+    this.teams = new ArrayList<>();
+    this.players = new ArrayList<>();
+    this.players.clear();
 
-		int playersPerTeam = gameMode.getPlayersPerTeam();
-		int aiCounter = 1;
-
-		for(int t = 0;t<teamsCount;t++){
-			Team team = new Team("squadra " + (t+1));
-
-			for(int p = 0;p<playersPerTeam;p++){
-				Player newPlayer;
-				// riserva il primo slot al giocatore umano (se presente)
-				boolean isHumanSlot = (t == 0 && p == 0) && profile != null;
-				if (isHumanSlot) {
-					String nick = profile!=null && profile.getNickname() != null && !profile.getNickname().isBlank()
-						? profile.getNickname() : "HumanPlayer";
-					newPlayer = new HumanPlayer(nick);
-				} else {
-					newPlayer = new ArtificialPlayer("ArtificialPlayer " + (aiCounter++));
-				}
-				newPlayer.setTeam(team);
-				// aggiungi alla lista globale di giocatori
-				this.players.add(newPlayer);
-			}
-			this.teams.add(team);
-		}
-
-	}
+    int playersPerTeam = gameMode.getPlayersPerTeam();
+    int totalPlayers = playersPerTeam * teamsCount;
+    
+    // creo tutti i giocatori
+    List<Player> allPlayers = new ArrayList<>();
+    int aiCounter = 1;
+    
+    for (int i = 0; i < totalPlayers; i++) {
+        Player newPlayer;
+        // Il primo giocatore è umano 
+        if (i == 0 && profile != null) {
+            String nick = profile != null && profile.getNickname() != null && !profile.getNickname().isBlank()
+                ? profile.getNickname() : "HumanPlayer";
+            newPlayer = new HumanPlayer(nick);
+        } else {
+            newPlayer = new ArtificialPlayer("ArtificialPlayer " + (aiCounter++));
+        }
+        allPlayers.add(newPlayer);
+    }
+    
+    // Crea le squadre
+    for (int t = 0; t < teamsCount; t++) {
+        Team team = new Team("Squadra " + (t + 1));
+        this.teams.add(team);
+    }
+    
+    // Assegna i giocatori alle squadre 
+    for (int i = 0; i < allPlayers.size(); i++) {
+        Player player = allPlayers.get(i);
+        
+        if (playersPerTeam == 1) {
+            // Modalità 2 giocatori
+            player.setTeam(teams.get(i));
+        } else {
+        // in modo alternato per la modalitá 4 giuocatrici
+            int teamIndex = i % teamsCount;
+            player.setTeam(teams.get(teamIndex));
+        }
+        this.players.add(player);
+    }
+}
 
 	/**
 	 * Notifica la view con lo stato completo del gioco. Utile all'avvio.
@@ -175,6 +193,8 @@ public class TressetteGame extends AbstractGame{
 					}
 				});
 				thinkTimer.setRepeats(false);
+        // Traccia il timer
+        activeTimers.add(thinkTimer);
 				thinkTimer.start();
 			}
 		} else {
@@ -197,13 +217,13 @@ public class TressetteGame extends AbstractGame{
 
 		if (winner != null) {
 			// Timer da 1000 ms (1 secondo), parte una sola volta
-			new javax.swing.Timer(2000, e -> {
-				// Notifico alla view che il trick è terminato
+			Timer trickEndTimer = new Timer(2000, e -> {
+				// notifico alla view che il trick è terminato
 				Object payload = plays;
 				setChanged();
 				notifyObservers(new ModelEventMessage(ModelEventMessage.ModelEvent.TRICK_ENDED, payload));
 
-				// Poi gestisco la pesca
+				// poi gestisco la pesca
 				gameMode.handlePostTrickDraw(deck, players, winner);
 
 				if (gameMode instanceof TwoPlayerStrategy) {
@@ -224,10 +244,10 @@ public class TressetteGame extends AbstractGame{
 					this.currentTrick = new Trick();
 					nextTurn(true);	
 				}
-			}) {{
-				setRepeats(false); // esegui solo una volta
-				start();
-			}};
+			});
+				trickEndTimer.setRepeats(false); // esegui solo una volta
+        activeTimers.add(trickEndTimer);
+				trickEndTimer.start();
 		}
 
 	}
@@ -366,5 +386,27 @@ public class TressetteGame extends AbstractGame{
 		}
 		return false;
 	}
+    /**
+     * Ferma tutti i timer attivi e pulisce le risorse
+     */
+    public void cleanup() {
+        // Ferma tutti i timer in corso
+        for (Timer timer : activeTimers) {
+            if (timer != null && timer.isRunning()) {
+                timer.stop();
+            }
+        }
+        activeTimers.clear();
+        
+        // Resetta il flag isThinking per tutti gli AI
+        for (Player p : players) {
+            if (p instanceof ArtificialPlayer) {
+                ((ArtificialPlayer) p).setIsThinking(false);
+            }
+        }
+        
+        // Rimuovi tutti gli observer
+        deleteObservers();
+    }
 
 }

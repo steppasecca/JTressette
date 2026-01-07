@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashSet;
 
 /**
- * Gestisce il ciclo di animazione in un thread separato implementando Runnable
+ * Gestisce il ciclo di animazione in un thread separato implementando runnable
  */
 public class AnimationLoop implements Runnable {
     // fps dell'animazione
@@ -20,7 +20,7 @@ public class AnimationLoop implements Runnable {
     private volatile boolean isRunning = false;
     private Thread gameThread;
     
-    // set di oggetti che implementano Animatable e sono in animazione
+    // set di oggetti che implementano animatable e sono in animazione
     private final Set<Animatable> animatedObjects = Collections.synchronizedSet(new HashSet<>());
 
     // flag per cercare di evitare repaint inutili
@@ -31,7 +31,7 @@ public class AnimationLoop implements Runnable {
 
     /**
      * Imposta il componente che verrà ridisegnato ad ogni frame di animazione
-     * @param target Il componente da ridisegnare (es. TablePanel)
+     * @param target Il componente da ridisegnare 
      */
     public void setRepaintTarget(JComponent target) {
         this.repaintTarget = target;

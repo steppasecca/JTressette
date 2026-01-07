@@ -31,19 +31,41 @@ public class GamePanel extends JPanel implements Observer {
     public GamePanel() {
         super(new BorderLayout(8, 8));
         this.animationLoop = new AnimationLoop();
+        setBackground(new Color(15, 60, 40)); // Verde scuro
     }
 
     public void initGP(List<org.model.Player> players) {
         // definisco i pannelli interni
         handPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
-        scorePanel = new JPanel(new GridLayout(0, 1));
+        handPanel.setBackground(new Color(20, 70, 50));
+        
+        scorePanel = new JPanel();
+        scorePanel.setLayout(new BoxLayout(scorePanel, BoxLayout.Y_AXIS));
+        scorePanel.setBackground(new Color(20, 70, 50));
+        scorePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
         tablePanel = new TablePanel(players, animationLoop);
 
-        // IMPORTANTE: Imposta il TablePanel come target per il repaint centralizzato
+        // imposto il TablePanel come target per il repaint centralizzato
         animationLoop.setRepaintTarget(tablePanel);
 
-        // definisco il bottone per la pausa
-        pauseButton = new JButton("pausa");
+        // bottone per la pausa
+        pauseButton = new JButton("⏸ Pausa");
+        pauseButton.setFont(new Font("SansSerif", Font.BOLD, 12));
+        pauseButton.setForeground(Color.WHITE);
+        pauseButton.setBackground(new Color(60, 60, 60));
+        pauseButton.setFocusPainted(false);
+        pauseButton.setBorderPainted(false);
+        pauseButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        pauseButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                pauseButton.setBackground(new Color(80, 80, 80));
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                pauseButton.setBackground(new Color(60, 60, 60));
+            }
+        });
         
         pauseButton.addActionListener(e -> {
             if (onPause != null) {
@@ -53,18 +75,30 @@ public class GamePanel extends JPanel implements Observer {
 
         // in alto la scoreBoard
         JPanel top = new JPanel(new BorderLayout());
-        top.add(new JLabel("punteggi: "), BorderLayout.NORTH);
+        top.setBackground(new Color(15, 60, 40));
+        
+        JLabel scoreTitle = new JLabel(" 📊 Punteggi e Squadre");
+        scoreTitle.setFont(new Font("SansSerif", Font.BOLD, 14));
+        scoreTitle.setForeground(new Color(212, 175, 55)); // Oro
+        top.add(scoreTitle, BorderLayout.NORTH);
         top.add(scorePanel, BorderLayout.CENTER);
         top.add(pauseButton, BorderLayout.EAST);
 
         // in basso la mano e i pulsanti
         JPanel bottom = new JPanel(new BorderLayout());
+        bottom.setBackground(new Color(15, 60, 40));
         JPanel bottomTop = new JPanel(new BorderLayout());
-        bottomTop.add(new Label("Mano: "), BorderLayout.NORTH);
-        handPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        bottomTop.setBackground(new Color(15, 60, 40));
+        
+        JLabel handLabel = new JLabel(" 🃏 La tua mano:");
+        handLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+        handLabel.setForeground(new Color(212, 175, 55)); // Oro
+        bottomTop.add(handLabel, BorderLayout.NORTH);
+        handPanel.setBorder(BorderFactory.createLineBorder(new Color(212, 175, 55), 2));
         bottomTop.add(new JScrollPane(handPanel), BorderLayout.CENTER);
 
         JPanel controls = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        controls.setBackground(new Color(15, 60, 40));
         bottom.add(bottomTop, BorderLayout.CENTER);
         bottom.add(controls, BorderLayout.SOUTH);
 
@@ -147,11 +181,17 @@ public class GamePanel extends JPanel implements Observer {
 
     private void handleRoundEnded(List<Team> teams) {
         updateScores(teams);
-        JOptionPane.showMessageDialog(this, "Fine della round! Si procede al prossimo.");
+        
+        StringBuilder msg = new StringBuilder("🏁 Fine del round!\n\n");
+        for (Team t : teams) {
+            msg.append(t.getTeamName()).append(": ").append(t.getTeamPoints()).append(" punti\n");
+        }
+        
+        JOptionPane.showMessageDialog(this, msg.toString(), "Round Terminato", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void handleGameOver() {
-        JOptionPane.showMessageDialog(this, "La partita è finita!", "Game Over", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, "🏆 La partita è finita!", "Game Over", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void handleHandUpdate(Hand hand) {
@@ -172,7 +212,20 @@ public class GamePanel extends JPanel implements Observer {
                 b = new JButton(c.toString());
             }
             b.setFocusPainted(false);
-            b.setBorder(BorderFactory.createEmptyBorder());
+            b.setBorder(BorderFactory.createLineBorder(new Color(100, 100, 100), 1));
+            b.setBackground(new Color(30, 80, 60));
+            b.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            
+            // Effetto hover
+            b.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    b.setBorder(BorderFactory.createLineBorder(new Color(255, 215, 0), 2));
+                }
+                public void mouseExited(java.awt.event.MouseEvent evt) {
+                    b.setBorder(BorderFactory.createLineBorder(new Color(100, 100, 100), 1));
+                }
+            });
+            
             b.addActionListener(e -> cardClickListener.accept(c));
             handPanel.add(b);
         }
@@ -182,9 +235,43 @@ public class GamePanel extends JPanel implements Observer {
 
     public void updateScores(List<Team> teams) {
         scorePanel.removeAll();
+        
         for (Team t : teams) {
-            scorePanel.add(new JLabel(t.getTeamName() + ": " + t.getTeamPoints()));
+            // Box per ogni squadra
+            JPanel teamBox = new JPanel();
+            teamBox.setLayout(new BoxLayout(teamBox, BoxLayout.Y_AXIS));
+            teamBox.setBackground(new Color(40, 100, 70));
+            teamBox.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(212, 175, 55), 2),
+                BorderFactory.createEmptyBorder(8, 10, 8, 10)
+            ));
+            teamBox.setAlignmentX(Component.LEFT_ALIGNMENT);
+            
+            // Nome squadra e punteggio
+            JLabel teamLabel = new JLabel(t.getTeamName() + " - Punti: " + t.getTeamPoints());
+            teamLabel.setFont(new Font("SansSerif", Font.BOLD, 15));
+            teamLabel.setForeground(new Color(255, 215, 0)); // Oro brillante
+            teamLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            teamBox.add(teamLabel);
+            
+            teamBox.add(Box.createVerticalStrut(5));
+            
+            // Giocatori della squadra
+            for (Player p : t.getPlayers()) {
+                String icon = (p instanceof HumanPlayer) ? "👤" : "🤖";
+                String playerText = "  " + icon + " " + p.getNome();
+                
+                JLabel playerLabel = new JLabel(playerText);
+                playerLabel.setFont(new Font("SansSerif", Font.PLAIN, 13));
+                playerLabel.setForeground(Color.WHITE);
+                playerLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                teamBox.add(playerLabel);
+            }
+            
+            scorePanel.add(teamBox);
+            scorePanel.add(Box.createVerticalStrut(10));
         }
+        
         scorePanel.revalidate();
         scorePanel.repaint();
     }
